@@ -19,7 +19,7 @@ Aplicação web que permite ao usuário escrever chamadas de funções pré-defi
 
 ## Requisitos Funcionais 
 
-Disponíveis no documento: https://github.com/oficina-de-integracao-II/code-to-block-backend/blob/1312bdd9ecf81a0f520b8caf9ed27f01c6113cb6/REQUISITOS.md
+Disponíveis no documento: [Requisitos Funcionais](https://github.com/oficina-de-integracao-II/code-to-block-frontend/blob/daed08754a18df2b32f8b03343eb51eaf1fcde3c/REQUISITOS.md)
 
 ---
 
