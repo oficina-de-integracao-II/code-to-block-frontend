@@ -7,7 +7,7 @@ describe('App', () => {
     render(<App />);
 
     expect(
-      screen.getByRole('heading', { name: 'Título inexistente' }),
+      screen.getByRole('heading', { name: 'Code to Blocks' }),
     ).toBeInTheDocument();
   });
 });
