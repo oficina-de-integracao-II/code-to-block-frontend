@@ -1,12 +1,9 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
+import { RegisterPage } from '../features/auth/RegisterPage';
 
 function LoginPage() {
   return <h2>Login</h2>;
-}
-
-function RegisterPage() {
-  return <h2>Cadastro</h2>;
 }
 
 function WorkspacePage() {
