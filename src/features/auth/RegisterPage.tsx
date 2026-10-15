@@ -9,6 +9,7 @@ import { validateRegisterForm, type RegisterFormErrors } from './validateRegiste
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
@@ -20,7 +21,7 @@ export function RegisterPage() {
     event.preventDefault();
     setSubmitError(null);
 
-    const validationErrors = validateRegisterForm({ email, senha, confirmarSenha });
+    const validationErrors = validateRegisterForm({ nome, email, senha, confirmarSenha });
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length > 0) {
@@ -30,7 +31,7 @@ export function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await registerUser({ email, senha });
+      await registerUser({ nome, email, senha });
       navigate('/login');
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 409) {
@@ -48,6 +49,13 @@ export function RegisterPage() {
       <h1 className="font-heading text-2xl font-bold text-ink">Criar conta</h1>
 
       <form onSubmit={handleSubmit} noValidate className="flex w-full flex-col gap-4">
+        <TextField
+          label="Nome"
+          placeholder="Seu nome"
+          value={nome}
+          onChange={(event) => setNome(event.target.value)}
+          error={errors.nome}
+        />
         <TextField
           label="E-mail"
           type="email"

@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 export const handlers = [
   http.post('http://localhost:3000/auth/register', async ({ request }) => {
-    const body = (await request.json()) as { email: string; senha: string };
+    const body = (await request.json()) as { nome: string; email: string; senha: string };
 
     if (body.email === 'duplicado@email.com') {
       return HttpResponse.json(
@@ -12,7 +12,7 @@ export const handlers = [
     }
 
     return HttpResponse.json(
-      { id: '1', email: body.email },
+      { id: '1', nome: body.nome, email: body.email },
       { status: 201 },
     );
   }),

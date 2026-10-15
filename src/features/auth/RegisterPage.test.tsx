@@ -19,11 +19,19 @@ function renderRegisterPage() {
 
 async function fillForm(
   user: ReturnType<typeof userEvent.setup>,
-  { email, senha, confirmarSenha }: { email: string; senha: string; confirmarSenha: string },
+  {
+    nome,
+    email,
+    senha,
+    confirmarSenha,
+  }: { nome: string; email: string; senha: string; confirmarSenha: string },
 ) {
-  await user.type(screen.getByLabelText('E-mail'), email);
-  await user.type(screen.getByLabelText('Senha (mín. 8 caracteres)'), senha);
-  await user.type(screen.getByLabelText('Confirmar senha'), confirmarSenha);
+  if (nome) await user.type(screen.getByLabelText('Nome'), nome);
+  if (email) await user.type(screen.getByLabelText('E-mail'), email);
+  if (senha) await user.type(screen.getByLabelText('Senha (mín. 8 caracteres)'), senha);
+  if (confirmarSenha) {
+    await user.type(screen.getByLabelText('Confirmar senha'), confirmarSenha);
+  }
 }
 
 describe('RegisterPage', () => {
@@ -32,6 +40,7 @@ describe('RegisterPage', () => {
     renderRegisterPage();
 
     await fillForm(user, {
+      nome: 'Ana',
       email: 'ana@email.com',
       senha: 'senha1234',
       confirmarSenha: 'senha1234',
@@ -55,6 +64,7 @@ describe('RegisterPage', () => {
     renderRegisterPage();
 
     await fillForm(user, {
+      nome: 'Ana',
       email: 'ana@email.com',
       senha: 'senha1234',
       confirmarSenha: 'senha1234',
@@ -77,6 +87,7 @@ describe('RegisterPage', () => {
     renderRegisterPage();
 
     await fillForm(user, {
+      nome: 'Ana',
       email: 'duplicado@email.com',
       senha: 'senha1234',
       confirmarSenha: 'senha1234',
@@ -99,6 +110,7 @@ describe('RegisterPage', () => {
     renderRegisterPage();
 
     await fillForm(user, {
+      nome: 'Ana',
       email: 'ana@email.com',
       senha: 'senha1234',
       confirmarSenha: 'senha1234',
@@ -110,17 +122,19 @@ describe('RegisterPage', () => {
     );
   });
 
-  it('valida e-mail inválido, senha curta e confirmação divergente', async () => {
+  it('valida nome vazio, e-mail inválido, senha curta e confirmação divergente', async () => {
     const user = userEvent.setup();
     renderRegisterPage();
 
     await fillForm(user, {
+      nome: '',
       email: 'email-invalido',
       senha: '123',
       confirmarSenha: '456',
     });
     await user.click(screen.getByRole('button', { name: 'Criar conta' }));
 
+    expect(screen.getByText('Informe seu nome.')).toBeInTheDocument();
     expect(
       screen.getByText('Informe um e-mail válido.'),
     ).toBeInTheDocument();
