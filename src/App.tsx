@@ -1,9 +1,7 @@
+import { AppRouter } from './app/router';
+
 function App() {
-  return (
-    <main>
-      <h1>Code to Blocks</h1>
-    </main>
-  );
+  return <AppRouter />;
 }
 
 export default App;
