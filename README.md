@@ -26,7 +26,7 @@ A arquitetura planejada para a aplicação é composta por:
 - **Parser/interpretador:** identifica as funções conhecidas no código, no próprio frontend.
 - **Renderizador de blocos:** representa visualmente as chamadas reconhecidas.
 - **Painel de funções:** apresenta o catálogo de funções disponibilizado pelo backend.
-- **Autenticação:** cadastro e login com e-mail/senha, contexto de sessão (`AuthContext`) com persistência do token.
+- **Autenticação:** cadastro e login com e-mail/senha, login com Google (Google Identity Services), contexto de sessão (`AuthContext`) com persistência do token.
 - **API backend:** fornece o catálogo e oferece operações para autenticação e gerenciamento de projetos.
 
 Fluxo principal planejado:
@@ -120,7 +120,7 @@ cp .env.example .env
 ```
 
 - `VITE_API_URL`: URL base da API do backend, usada pelo cliente HTTP (`src/services/api.ts`) e pelas chamadas de autenticação.
-- `VITE_GOOGLE_CLIENT_ID`: Client ID do Google usado pelo login via Google (ainda não integrado).
+- `VITE_GOOGLE_CLIENT_ID`: Client ID OAuth do Google (o mesmo configurado no backend), usado pelo botão "Entrar com Google" via Google Identity Services. Sem essa variável, o botão não é renderizado e a tela de login mostra uma mensagem de erro, sem travar o restante do formulário.
 
 ### Executar a aplicação
 
