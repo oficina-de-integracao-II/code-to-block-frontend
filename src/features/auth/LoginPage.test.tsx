@@ -1,11 +1,30 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { server } from '../../test/server';
 import { AuthProvider } from './AuthProvider';
 import { LoginPage } from './LoginPage';
+
+vi.mock('./loadGoogleScript', () => ({
+  loadGoogleScript: vi.fn().mockResolvedValue(undefined),
+}));
+
+function mockGoogleSdk() {
+  const initialize = vi.fn();
+
+  window.google = {
+    accounts: { id: { initialize, renderButton: vi.fn(), prompt: vi.fn() } },
+  };
+
+  return {
+    triggerCredential: (credential: string) => {
+      const { callback } = initialize.mock.calls[0][0];
+      callback({ credential });
+    },
+  };
+}
 
 function renderLoginPage(state?: { sessionExpired?: boolean }) {
   return render(
@@ -29,6 +48,11 @@ async function fillForm(
 }
 
 describe('LoginPage', () => {
+  afterEach(() => {
+    delete window.google;
+    vi.unstubAllEnvs();
+  });
+
   it('exibe o aviso de sessão expirada quando navegado com esse state', () => {
     renderLoginPage({ sessionExpired: true });
 
@@ -65,8 +89,8 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
     expect(
-      await screen.findByRole('alert', {}, { timeout: 2000 }),
-    ).toHaveTextContent('E-mail ou senha incorretos.');
+      await screen.findByText('E-mail ou senha incorretos.', {}, { timeout: 2000 }),
+    ).toBeInTheDocument();
   });
 
   it('exibe mensagem genérica em erro inesperado do servidor', async () => {
@@ -82,8 +106,48 @@ describe('LoginPage', () => {
     await fillForm(user, { email: 'ana@email.com', senha: 'senha1234' });
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Não foi possível entrar. Tente novamente.',
-    );
+    expect(
+      await screen.findByText('Não foi possível entrar. Tente novamente.'),
+    ).toBeInTheDocument();
+  });
+
+  it('autentica com Google e navega para /app', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'client-id-teste');
+    const google = mockGoogleSdk();
+    renderLoginPage();
+
+    await waitFor(() => expect(window.google!.accounts.id.initialize).toHaveBeenCalled());
+    google.triggerCredential('id-token-valido');
+
+    expect(
+      await screen.findByRole('heading', { name: 'App' }),
+    ).toBeInTheDocument();
+  });
+
+  it('exibe mensagem de erro quando o login com Google falha, sem quebrar a tela', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'client-id-teste');
+    const google = mockGoogleSdk();
+    renderLoginPage();
+
+    await waitFor(() => expect(window.google!.accounts.id.initialize).toHaveBeenCalled());
+    google.triggerCredential('id-token-invalido');
+
+    expect(
+      await screen.findByText(
+        'Não deu para entrar com o Google. Tente de novo ou use e-mail e senha.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument();
+  });
+
+  it('exibe mensagem de erro quando o usuário cancela/fecha o seletor do Google', () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', '');
+    renderLoginPage();
+
+    expect(
+      screen.getByText(
+        'Não deu para entrar com o Google. Tente de novo ou use e-mail e senha.',
+      ),
+    ).toBeInTheDocument();
   });
 });

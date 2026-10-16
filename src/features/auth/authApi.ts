@@ -30,3 +30,7 @@ export type LoginPayload = {
 export function loginUser(payload: LoginPayload) {
   return api.post<AuthResponse>('/auth/login', payload);
 }
+
+export function loginWithGoogle(idToken: string) {
+  return api.post<AuthResponse>('/auth/google', { idToken });
+}

@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from 'react';
+import { useCallback, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AuthLayout } from '../../components/layout/AuthLayout';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
 import { useAuth } from './AuthContext';
-import { loginUser } from './authApi';
+import { loginUser, loginWithGoogle } from './authApi';
+import { GoogleLoginButton } from './GoogleLoginButton';
 
 type LoginLocationState = {
   sessionExpired?: boolean;
@@ -19,6 +20,7 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [googleError, setGoogleError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -40,6 +42,29 @@ export function LoginPage() {
       setIsSubmitting(false);
     }
   }
+
+  const handleGoogleSuccess = useCallback(
+    async (idToken: string) => {
+      setGoogleError(null);
+
+      try {
+        const { data } = await loginWithGoogle(idToken);
+        login(data.accessToken, data.user);
+        navigate('/app');
+      } catch {
+        setGoogleError(
+          'Não deu para entrar com o Google. Tente de novo ou use e-mail e senha.',
+        );
+      }
+    },
+    [login, navigate],
+  );
+
+  const handleGoogleError = useCallback(() => {
+    setGoogleError(
+      'Não deu para entrar com o Google. Tente de novo ou use e-mail e senha.',
+    );
+  }, []);
 
   return (
     <AuthLayout>
@@ -75,6 +100,23 @@ export function LoginPage() {
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Entrando…' : 'Entrar'}
         </Button>
+
+        <div className="flex w-full items-center gap-3">
+          <div className="h-[2px] flex-1 bg-ink-muted" />
+          <span className="text-sm text-ink-muted">ou</span>
+          <div className="h-[2px] flex-1 bg-ink-muted" />
+        </div>
+
+        <GoogleLoginButton
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+        />
+
+        {googleError && (
+          <p role="alert" className="text-[13px] text-warn-text">
+            {googleError}
+          </p>
+        )}
 
         <p className="flex justify-center gap-1.5 text-sm text-ink-muted">
           Não tem conta?{' '}

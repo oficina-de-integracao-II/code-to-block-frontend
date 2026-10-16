@@ -39,6 +39,25 @@ export const handlers = [
     );
   }),
 
+  http.post('http://localhost:3000/auth/google', async ({ request }) => {
+    const body = (await request.json()) as { idToken: string };
+
+    if (body.idToken !== 'id-token-valido') {
+      return HttpResponse.json(
+        { message: 'Token do Google inválido' },
+        { status: 401 },
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        accessToken: 'token-teste',
+        user: { id: 1, nome: 'Ana', email: 'ana@gmail.com', role: 'USER' },
+      },
+      { status: 200 },
+    );
+  }),
+
   http.get('http://localhost:3000/api/blocks', () => {
     return HttpResponse.json({
       blocks: [
