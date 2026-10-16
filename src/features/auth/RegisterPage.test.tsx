@@ -4,15 +4,18 @@ import { http, HttpResponse, delay } from 'msw';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { server } from '../../test/server';
+import { AuthProvider } from './AuthProvider';
 import { RegisterPage } from './RegisterPage';
 
 function renderRegisterPage() {
   return render(
     <MemoryRouter initialEntries={['/register']}>
-      <Routes>
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/login" element={<h1>Login</h1>} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/app" element={<h1>App</h1>} />
+        </Routes>
+      </AuthProvider>
     </MemoryRouter>,
   );
 }
@@ -35,7 +38,7 @@ async function fillForm(
 }
 
 describe('RegisterPage', () => {
-  it('cadastra com sucesso e redireciona para o login', async () => {
+  it('cadastra com sucesso, autentica e navega para /app', async () => {
     const user = userEvent.setup();
     renderRegisterPage();
 
@@ -48,7 +51,7 @@ describe('RegisterPage', () => {
     await user.click(screen.getByRole('button', { name: 'Criar conta' }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Login' }),
+      await screen.findByRole('heading', { name: 'App' }),
     ).toBeInTheDocument();
   });
 
@@ -56,7 +59,13 @@ describe('RegisterPage', () => {
     server.use(
       http.post('http://localhost:3000/auth/register', async () => {
         await delay(50);
-        return HttpResponse.json({ id: '1', email: 'ana@email.com' }, { status: 201 });
+        return HttpResponse.json(
+          {
+            accessToken: 'token-teste',
+            user: { id: 1, nome: 'Ana', email: 'ana@email.com', role: 'USER' },
+          },
+          { status: 201 },
+        );
       }),
     );
 
@@ -78,7 +87,7 @@ describe('RegisterPage', () => {
     ).toBeDisabled();
 
     await waitFor(() =>
-      expect(screen.getByRole('heading', { name: 'Login' })).toBeInTheDocument(),
+      expect(screen.getByRole('heading', { name: 'App' })).toBeInTheDocument(),
     );
   });
 

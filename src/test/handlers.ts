@@ -12,8 +12,30 @@ export const handlers = [
     }
 
     return HttpResponse.json(
-      { id: '1', nome: body.nome, email: body.email },
+      {
+        accessToken: 'token-teste',
+        user: { id: 1, nome: body.nome, email: body.email, role: 'USER' },
+      },
       { status: 201 },
+    );
+  }),
+
+  http.post('http://localhost:3000/auth/login', async ({ request }) => {
+    const body = (await request.json()) as { email: string; senha: string };
+
+    if (body.email === 'inexistente@email.com' || body.senha === 'senha-errada') {
+      return HttpResponse.json(
+        { message: 'E-mail ou senha incorretos.' },
+        { status: 401 },
+      );
+    }
+
+    return HttpResponse.json(
+      {
+        accessToken: 'token-teste',
+        user: { id: 1, nome: 'Ana', email: body.email, role: 'USER' },
+      },
+      { status: 200 },
     );
   }),
 
