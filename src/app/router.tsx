@@ -5,6 +5,7 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { ProtectedRoute } from '../features/auth/ProtectedRoute';
 import { PublicOnlyRoute } from '../features/auth/PublicOnlyRoute';
 import { RegisterPage } from '../features/auth/RegisterPage';
+import { FunctionsProvider } from '../features/functions/FunctionsProvider';
 
 function WorkspacePage() {
   return <p>Bem-vindo ao editor!</p>;
@@ -35,7 +36,9 @@ export function AppRouter() {
             path="/app"
             element={
               <ProtectedRoute>
-                <AppLayout />
+                <FunctionsProvider>
+                  <AppLayout />
+                </FunctionsProvider>
               </ProtectedRoute>
             }
           >
