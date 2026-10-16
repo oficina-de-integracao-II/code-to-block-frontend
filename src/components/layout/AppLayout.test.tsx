@@ -1,13 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
+import { AuthProvider } from '../../features/auth/AuthProvider';
 import { AppLayout } from './AppLayout';
 
 describe('AppLayout', () => {
   it('renderiza as áreas de funções, editor e blocos', () => {
     render(
       <MemoryRouter>
-        <AppLayout />
+        <AuthProvider>
+          <AppLayout />
+        </AuthProvider>
       </MemoryRouter>,
     );
 

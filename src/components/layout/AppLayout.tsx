@@ -1,10 +1,12 @@
 import { Outlet } from 'react-router-dom';
+import { LogoutButton } from '../../features/auth/LogoutButton';
 
 export function AppLayout() {
   return (
     <main className="min-h-screen bg-gray-50 p-6 text-gray-900">
-      <header className="border-b border-gray-200 pb-4">
+      <header className="flex items-center justify-between border-b border-gray-200 pb-4">
         <h1 className="text-2xl font-bold">Code to Blocks</h1>
+        <LogoutButton />
       </header>
 
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-[1fr_0.8fr]">

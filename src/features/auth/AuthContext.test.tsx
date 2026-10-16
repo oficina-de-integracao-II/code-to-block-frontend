@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { TOKEN_KEY } from '../../services/api';
 import { useAuth } from './AuthContext';
@@ -25,9 +26,14 @@ function TestConsumer() {
 
 function renderWithProvider() {
   return render(
-    <AuthProvider>
-      <TestConsumer />
-    </AuthProvider>,
+    <MemoryRouter initialEntries={['/app']}>
+      <AuthProvider>
+        <Routes>
+          <Route path="/app" element={<TestConsumer />} />
+          <Route path="/login" element={<h1>Login</h1>} />
+        </Routes>
+      </AuthProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -82,19 +88,29 @@ describe('AuthContext', () => {
     expect(localStorage.getItem(USER_KEY)).toBeNull();
   });
 
-  it('limpa a sessão quando recebe o evento auth:unauthorized', async () => {
+  it('navega para /login com aviso de sessão expirada quando havia sessão', async () => {
     const user = userEvent.setup();
     renderWithProvider();
 
     await user.click(screen.getByRole('button', { name: 'Login' }));
-    expect(screen.getByTestId('token')).toHaveTextContent('novo-token');
 
     act(() => {
       window.dispatchEvent(new Event('auth:unauthorized'));
     });
 
-    expect(screen.getByTestId('token')).toHaveTextContent('sem-token');
-    expect(screen.getByTestId('user')).toHaveTextContent('sem-usuario');
+    expect(
+      await screen.findByRole('heading', { name: 'Login' }),
+    ).toBeInTheDocument();
+  });
+
+  it('não navega quando o evento auth:unauthorized ocorre sem sessão ativa', () => {
+    renderWithProvider();
+
+    act(() => {
+      window.dispatchEvent(new Event('auth:unauthorized'));
+    });
+
+    expect(screen.getByTestId('token')).toBeInTheDocument();
   });
 
   it('ignora usuário persistido com JSON inválido', () => {

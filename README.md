@@ -26,7 +26,7 @@ A arquitetura planejada para a aplicação é composta por:
 - **Parser/interpretador:** identifica as funções conhecidas no código, no próprio frontend.
 - **Renderizador de blocos:** representa visualmente as chamadas reconhecidas.
 - **Painel de funções:** apresenta o catálogo de funções disponibilizado pelo backend.
-- **Autenticação:** cadastro e login com e-mail/senha, login com Google (Google Identity Services), contexto de sessão (`AuthContext`) com persistência do token.
+- **Autenticação:** cadastro e login com e-mail/senha, login com Google (Google Identity Services), logout, contexto de sessão (`AuthContext`) com persistência do token, e rotas protegidas (`ProtectedRoute`/`PublicOnlyRoute`).
 - **API backend:** fornece o catálogo e oferece operações para autenticação e gerenciamento de projetos.
 
 Fluxo principal planejado:

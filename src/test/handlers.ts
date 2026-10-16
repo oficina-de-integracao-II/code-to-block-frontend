@@ -58,6 +58,10 @@ export const handlers = [
     );
   }),
 
+  http.post('http://localhost:3000/auth/logout', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.get('http://localhost:3000/api/blocks', () => {
     return HttpResponse.json({
       blocks: [

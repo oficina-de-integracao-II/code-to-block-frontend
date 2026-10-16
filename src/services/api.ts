@@ -16,10 +16,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+const UNAUTHENTICATED_PATHS = ['/auth/login', '/auth/register', '/auth/google'];
+
+function isUnauthenticatedRequest(url?: string) {
+  return UNAUTHENTICATED_PATHS.some((path) => url?.includes(path));
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isUnauthorized = error.response?.status === 401;
+    const isAuthEndpoint = isUnauthenticatedRequest(error.config?.url);
+
+    if (isUnauthorized && !isAuthEndpoint) {
       localStorage.removeItem(TOKEN_KEY);
       window.dispatchEvent(new Event('auth:unauthorized'));
     }
