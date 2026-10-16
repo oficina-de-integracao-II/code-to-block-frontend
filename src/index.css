@@ -1,7 +1,23 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ink: #1f2a44;
+  --color-ink-muted: #4a5878;
+  --color-surface: #ffffff;
+  --color-bg: #eef6ff;
+  --color-primary: #1c6cb0;
+  --color-danger-text: #b3261e;
+  --color-soft-danger: #ffd9de;
+  --color-sun: #f7ca1b;
+
+  --radius-16: 16px;
+
+  --font-heading: 'Baloo 2', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+}
+
 :root {
-  font-family: system-ui, sans-serif;
+  font-family: 'Nunito', system-ui, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
