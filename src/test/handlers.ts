@@ -62,6 +62,25 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
+  http.get('http://localhost:3000/functions', () => {
+    return HttpResponse.json([
+      {
+        id: 1,
+        nome: 'Andar',
+        descricao: 'Move o robô para frente.',
+        codigoArduino: 'digitalWrite(MOTOR_E, HIGH);\ndigitalWrite(MOTOR_D, HIGH);',
+        blocoDefinicao: { type: 'andar', message0: 'Andar' },
+      },
+      {
+        id: 2,
+        nome: 'VireEsquerda',
+        descricao: 'Gira o robô 90° para a esquerda.',
+        codigoArduino: 'digitalWrite(MOTOR_E, HIGH);\ndigitalWrite(MOTOR_D, LOW);',
+        blocoDefinicao: { type: 'vire_esquerda', message0: 'Vire à esquerda' },
+      },
+    ]);
+  }),
+
   http.get('http://localhost:3000/api/blocks', () => {
     return HttpResponse.json({
       blocks: [
