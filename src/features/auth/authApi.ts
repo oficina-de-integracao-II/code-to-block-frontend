@@ -34,3 +34,7 @@ export function loginUser(payload: LoginPayload) {
 export function loginWithGoogle(idToken: string) {
   return api.post<AuthResponse>('/auth/google', { idToken });
 }
+
+export function logoutUser() {
+  return api.post('/auth/logout');
+}
