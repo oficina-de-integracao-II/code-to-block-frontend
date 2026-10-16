@@ -26,7 +26,7 @@ A arquitetura planejada para a aplicação é composta por:
 - **Parser/interpretador:** identifica as funções conhecidas no código, no próprio frontend.
 - **Renderizador de blocos:** representa visualmente as chamadas reconhecidas.
 - **Painel de funções:** apresenta o catálogo de funções disponibilizado pelo backend.
-- **Autenticação:** permite o acesso à aplicação.
+- **Autenticação:** cadastro e login com e-mail/senha, contexto de sessão (`AuthContext`) com persistência do token.
 - **API backend:** fornece o catálogo e oferece operações para autenticação e gerenciamento de projetos.
 
 Fluxo principal planejado:
@@ -57,7 +57,7 @@ A implementação dessas funcionalidades ocorrerá nas próximas etapas do proje
 | Formatação | Prettier |
 | CI | GitHub Actions |
 
-Monaco Editor, Blockly, autenticação, cliente HTTP e demais tecnologias funcionais serão integrados conforme o desenvolvimento da aplicação.
+Monaco Editor, Blockly e demais tecnologias funcionais serão integrados conforme o desenvolvimento da aplicação. Autenticação (cadastro, login, contexto de sessão) e cliente HTTP já estão integrados.
 
 ## Estrutura de Pastas
 
@@ -70,6 +70,13 @@ code-to-block-frontend/
 │       └── ci.yml
 ├── public/
 ├── src/
+│   ├── app/
+│   │   └── router.tsx
+│   ├── components/
+│   │   ├── layout/
+│   │   └── ui/
+│   ├── features/
+│   │   └── auth/
 │   ├── test/
 │   │   ├── handlers.ts
 │   │   ├── server.ts
@@ -112,7 +119,8 @@ Copie o arquivo de exemplo:
 cp .env.example .env
 ```
 
-Preencha as variáveis necessárias conforme as integrações que forem implementadas. A URL da API e as credenciais de autenticação serão utilizadas quando essas integrações estiverem disponíveis.
+- `VITE_API_URL`: URL base da API do backend, usada pelo cliente HTTP (`src/services/api.ts`) e pelas chamadas de autenticação.
+- `VITE_GOOGLE_CLIENT_ID`: Client ID do Google usado pelo login via Google (ainda não integrado).
 
 ### Executar a aplicação
 
@@ -163,7 +171,7 @@ Os arquivos relacionados aos mocks ficam em `src/test/`:
 
 Para adicionar um mock, registre um handler em `handlers.ts` ou configure uma resposta específica no teste com `server.use()`. As requisições não interceptadas geram erro durante os testes.
 
-O contrato OpenAPI do backend ainda não está definido. Os handlers correspondentes à API serão adicionados quando os endpoints forem acordados com o time de backend.
+O contrato OpenAPI do backend está em `openapi.yaml` no repositório `code-to-block-backend`. Os handlers de `src/test/handlers.ts` seguem esse contrato (nomes de campos, status codes e formato de erro).
 
 ### Cobertura
 

@@ -4,11 +4,13 @@ import axios from 'axios';
 import { AuthLayout } from '../../components/layout/AuthLayout';
 import { Button } from '../../components/ui/Button';
 import { TextField } from '../../components/ui/TextField';
+import { useAuth } from './AuthContext';
 import { registerUser } from './authApi';
 import { validateRegisterForm, type RegisterFormErrors } from './validateRegisterForm';
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -31,8 +33,9 @@ export function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      await registerUser({ nome, email, senha });
-      navigate('/login');
+      const { data } = await registerUser({ nome, email, senha });
+      login(data.accessToken, data.user);
+      navigate('/app');
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 409) {
         setSubmitError('Este e-mail já está cadastrado.');
