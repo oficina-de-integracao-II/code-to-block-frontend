@@ -1,4 +1,5 @@
 import { useId, useMemo, useState } from 'react';
+import { FunctionDetail } from './FunctionDetail';
 import { useFunctions } from './FunctionsContext';
 
 function normalize(text: string) {
@@ -11,7 +12,10 @@ function normalize(text: string) {
 export function FunctionsPanel() {
   const { functions, loading, error, reload } = useFunctions();
   const [query, setQuery] = useState('');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const searchId = useId();
+
+  const selected = functions.find((fn) => fn.id === selectedId) ?? null;
 
   const filtered = useMemo(() => {
     const term = normalize(query.trim());
@@ -71,17 +75,24 @@ export function FunctionsPanel() {
         {!loading && !error && filtered.length > 0 && (
           <ul className="flex flex-col gap-2">
             {filtered.map((fn) => (
-              <li
-                key={fn.id}
-                className="rounded-md border border-gray-200 px-3 py-2"
-              >
-                <p className="text-sm font-semibold">{fn.nome}</p>
-                <p className="text-xs text-gray-500">{fn.descricao}</p>
+              <li key={fn.id}>
+                <button
+                  type="button"
+                  aria-pressed={fn.id === selectedId}
+                  onClick={() => setSelectedId(fn.id)}
+                  className={`w-full rounded-md border px-3 py-2 text-left
+                    ${fn.id === selectedId ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}
+                >
+                  <span className="block text-sm font-semibold">{fn.nome}</span>
+                  <span className="block text-xs text-gray-500">{fn.descricao}</span>
+                </button>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      {selected && <FunctionDetail fn={selected} />}
     </section>
   );
 }

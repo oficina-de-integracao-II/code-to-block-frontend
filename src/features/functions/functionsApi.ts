@@ -20,3 +20,17 @@ export type FunctionSummary = {
 export function listFunctions() {
   return api.get<FunctionSummary[]>('/functions');
 }
+
+export type FunctionParameter = {
+  nome: string;
+  tipo?: string;
+  descricao?: string;
+};
+
+export type FunctionDetail = FunctionSummary & {
+  parametros: FunctionParameter[] | null;
+};
+
+export function getFunction(id: number) {
+  return api.get<FunctionDetail>(`/functions/${id}`);
+}

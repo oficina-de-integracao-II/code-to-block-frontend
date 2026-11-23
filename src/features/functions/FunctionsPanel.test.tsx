@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FunctionsContext, type FunctionsContextValue } from './FunctionsContext';
 import type { FunctionSummary } from './functionsApi';
@@ -16,8 +16,8 @@ function makeFunction(id: number, nome: string, descricao: string): FunctionSumm
 
 const catalog = [
   makeFunction(1, 'Andar', 'Move o robô para frente.'),
-  makeFunction(2, 'ParaTras', 'Move o robô para trás.'),
-  makeFunction(3, 'VireEsquerda', 'Gira o robô 90° para a esquerda.'),
+  makeFunction(9, 'ParaTras', 'Move o robô para trás.'),
+  makeFunction(2, 'VireEsquerda', 'Gira o robô 90° para a esquerda.'),
 ];
 
 function renderPanel(overrides: Partial<FunctionsContextValue> = {}) {
@@ -97,5 +97,19 @@ describe('FunctionsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
     expect(value.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('selecionar uma função exibe seu código e descrição', async () => {
+    renderPanel();
+
+    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /VireEsquerda/ }));
+
+    const detail = await screen.findByRole('article', { name: 'Detalhe de VireEsquerda' });
+
+    expect(within(detail).getByText('Gira o robô 90° para a esquerda.')).toBeInTheDocument();
+    expect(within(detail).getByLabelText('Código Arduino (somente leitura)')).toBeInTheDocument();
+    expect(await within(detail).findByText('Esta função não recebe parâmetros.')).toBeInTheDocument();
   });
 });
