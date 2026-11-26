@@ -5,6 +5,7 @@ import { LoginPage } from '../features/auth/LoginPage';
 import { ProtectedRoute } from '../features/auth/ProtectedRoute';
 import { PublicOnlyRoute } from '../features/auth/PublicOnlyRoute';
 import { RegisterPage } from '../features/auth/RegisterPage';
+import { EditorProvider } from '../features/editor/EditorProvider';
 import { FunctionsProvider } from '../features/functions/FunctionsProvider';
 
 function WorkspacePage() {
@@ -37,7 +38,9 @@ export function AppRouter() {
             element={
               <ProtectedRoute>
                 <FunctionsProvider>
-                  <AppLayout />
+                  <EditorProvider>
+                    <AppLayout />
+                  </EditorProvider>
                 </FunctionsProvider>
               </ProtectedRoute>
             }

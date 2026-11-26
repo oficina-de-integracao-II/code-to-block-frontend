@@ -20,7 +20,10 @@ const catalog = [
   makeFunction(2, 'VireEsquerda', 'Gira o robô 90° para a esquerda.'),
 ];
 
-function renderPanel(overrides: Partial<FunctionsContextValue> = {}) {
+function renderPanel(
+  overrides: Partial<FunctionsContextValue> = {},
+  onSelectFunction?: (functionName: string) => void,
+) {
   const value: FunctionsContextValue = {
     functions: catalog,
     functionsByName: new Map(catalog.map((fn) => [fn.nome, fn])),
@@ -32,7 +35,7 @@ function renderPanel(overrides: Partial<FunctionsContextValue> = {}) {
 
   render(
     <FunctionsContext.Provider value={value}>
-      <FunctionsPanel />
+      <FunctionsPanel onSelectFunction={onSelectFunction} />
     </FunctionsContext.Provider>,
   );
 
@@ -99,6 +102,16 @@ describe('FunctionsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
     expect(value.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('clicar no nome da função avisa qual chamada inserir, sem abrir o detalhe', () => {
+    const onSelectFunction = vi.fn();
+    renderPanel({}, onSelectFunction);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inserir Andar' }));
+
+    expect(onSelectFunction).toHaveBeenCalledWith('Andar');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   function openDetail(nome: string) {
