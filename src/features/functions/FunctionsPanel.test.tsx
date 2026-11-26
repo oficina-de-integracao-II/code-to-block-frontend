@@ -81,7 +81,9 @@ describe('FunctionsPanel', () => {
   it('exibe estado de carregamento', () => {
     renderPanel({ loading: true, functions: [] });
 
-    expect(screen.getByText('Carregando funções...')).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Carregando funções' }),
+    ).toBeInTheDocument();
   });
 
   it('exibe erro e permite tentar novamente', () => {

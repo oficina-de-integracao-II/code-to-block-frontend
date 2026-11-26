@@ -10,10 +10,10 @@ export function AppLayout() {
         <LogoutButton />
       </header>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-[1fr_0.8fr]">
-        <div className="flex min-w-0 flex-col gap-4">
-          <FunctionsPanel />
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[340px_1fr_0.8fr]">
+        <FunctionsPanel />
 
+        <div className="flex min-w-0 flex-col gap-4">
           <section
             aria-label="Editor"
             className="rounded-lg border border-gray-200 bg-white p-4"
