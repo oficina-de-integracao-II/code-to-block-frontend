@@ -1,4 +1,6 @@
 import { useId, useMemo, useState } from 'react';
+import infoIcon from '../../assets/icons/info.svg';
+import magnifyingGlassIcon from '../../assets/icons/magnifying-glass.svg';
 import { FunctionDetail } from './FunctionDetail';
 import { useFunctions } from './FunctionsContext';
 
@@ -12,8 +14,8 @@ function normalize(text: string) {
 export function FunctionsPanel() {
   const { functions, loading, error, reload } = useFunctions();
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const searchId = useId();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const selected = functions.find((fn) => fn.id === selectedId) ?? null;
 
@@ -28,11 +30,19 @@ export function FunctionsPanel() {
   return (
     <section
       aria-label="Painel de funções"
-      className="rounded-lg border border-gray-200 bg-white p-4"
+      className="flex flex-col gap-3 bg-surface p-5"
     >
-      <h2 className="text-lg font-semibold">Funções</h2>
+      <h2 className="text-sm font-extrabold uppercase text-ink-muted">Funções</h2>
 
-      <div className="mt-3">
+      <div
+        className="flex items-center gap-2 rounded-[12px] bg-bg px-3 py-2.5
+                   focus-within:outline-2 focus-within:outline-primary"
+      >
+        <img
+          src={magnifyingGlassIcon}
+          alt=""
+          className="size-[18px] shrink-0"
+        />
         <label htmlFor={searchId} className="sr-only">
           Buscar função
         </label>
@@ -42,57 +52,75 @@ export function FunctionsPanel() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Buscar função"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          className="w-full bg-transparent text-sm text-ink outline-none
+                     placeholder:text-ink-muted"
         />
       </div>
 
-      <div className="mt-3">
-        {loading && <p className="text-sm text-gray-500">Carregando funções...</p>}
+      {loading && (
+        <div role="status" aria-label="Carregando funções" className="flex flex-col gap-1">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div key={index} className="h-5 w-full animate-pulse rounded-[6px] bg-bg" />
+          ))}
+        </div>
+      )}
 
-        {!loading && error && (
-          <div role="alert" className="text-sm text-red-700">
-            <p>{error}</p>
-            <button
-              type="button"
-              onClick={reload}
-              className="mt-2 underline"
+      {!loading && error && (
+        <div role="alert" className="flex flex-col items-start gap-1">
+          <p className="text-sm text-danger-text">{error}</p>
+          <button
+            type="button"
+            onClick={reload}
+            className="rounded-[10px] bg-soft-danger px-3 py-2 text-sm
+                       font-extrabold text-danger-text"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && functions.length === 0 && (
+        <p className="text-sm text-ink-muted">Nenhuma função disponível.</p>
+      )}
+
+      {!loading && !error && functions.length > 0 && filtered.length === 0 && (
+        <p className="text-sm text-ink-muted">
+          Nenhuma função encontrada para "{query.trim()}".
+        </p>
+      )}
+
+      {!loading && !error && filtered.length > 0 && (
+        <ul className="flex flex-col gap-1">
+          {filtered.map((fn) => (
+            <li
+              key={fn.id}
+              title={fn.descricao}
+              className="flex items-center gap-2 rounded-[8px] px-2.5 py-2"
             >
-              Tentar novamente
-            </button>
-          </div>
-        )}
+              <span className="min-w-0 flex-1 text-base text-ink">{fn.nome}</span>
+              <button
+                type="button"
+                aria-label={`Ver detalhes de ${fn.nome}`}
+                aria-haspopup="dialog"
+                onClick={() => setSelectedId(fn.id)}
+                className="shrink-0 cursor-pointer rounded-full p-1
+                           hover:bg-bg"
+              >
+                <img src={infoIcon} alt="" className="size-4" />
+              </button>
+              <span className="sr-only">{fn.descricao}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
-        {!loading && !error && functions.length === 0 && (
-          <p className="text-sm text-gray-500">Nenhuma função disponível.</p>
-        )}
-
-        {!loading && !error && functions.length > 0 && filtered.length === 0 && (
-          <p className="text-sm text-gray-500">
-            Nenhuma função encontrada para "{query.trim()}".
-          </p>
-        )}
-
-        {!loading && !error && filtered.length > 0 && (
-          <ul className="flex flex-col gap-2">
-            {filtered.map((fn) => (
-              <li key={fn.id}>
-                <button
-                  type="button"
-                  aria-pressed={fn.id === selectedId}
-                  onClick={() => setSelectedId(fn.id)}
-                  className={`w-full rounded-md border px-3 py-2 text-left
-                    ${fn.id === selectedId ? 'border-gray-900 bg-gray-50' : 'border-gray-200'}`}
-                >
-                  <span className="block text-sm font-semibold">{fn.nome}</span>
-                  <span className="block text-xs text-gray-500">{fn.descricao}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {selected && <FunctionDetail fn={selected} />}
+      {selected && (
+        <FunctionDetail
+          key={selected.id}
+          fn={selected}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
     </section>
   );
 }

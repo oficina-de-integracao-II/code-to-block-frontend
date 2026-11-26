@@ -27,10 +27,11 @@ export type FunctionParameter = {
   descricao?: string;
 };
 
-export type FunctionDetail = FunctionSummary & {
-  parametros: FunctionParameter[] | null;
+/** `parametros` é JSON livre e opcional no contrato (openapi.yaml). */
+export type FunctionDetails = FunctionSummary & {
+  parametros?: unknown;
 };
 
 export function getFunction(id: number) {
-  return api.get<FunctionDetail>(`/functions/${id}`);
+  return api.get<FunctionDetails>(`/functions/${id}`);
 }

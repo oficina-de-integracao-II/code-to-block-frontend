@@ -81,7 +81,9 @@ describe('FunctionsPanel', () => {
   it('exibe estado de carregamento', () => {
     renderPanel({ loading: true, functions: [] });
 
-    expect(screen.getByText('Carregando funções...')).toBeInTheDocument();
+    expect(
+      screen.getByRole('status', { name: 'Carregando funções' }),
+    ).toBeInTheDocument();
   });
 
   it('exibe erro e permite tentar novamente', () => {
@@ -99,17 +101,40 @@ describe('FunctionsPanel', () => {
     expect(value.reload).toHaveBeenCalledTimes(1);
   });
 
+  function openDetail(nome: string) {
+    const trigger = screen.getByRole('button', { name: `Ver detalhes de ${nome}` });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    return trigger;
+  }
+
   it('selecionar uma função exibe seu código e descrição', async () => {
     renderPanel();
 
-    expect(screen.queryByRole('article')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /VireEsquerda/ }));
+    openDetail('VireEsquerda');
 
-    const detail = await screen.findByRole('article', { name: 'Detalhe de VireEsquerda' });
+    const detail = screen.getByRole('dialog', { name: 'VireEsquerda' });
 
     expect(within(detail).getByText('Gira o robô 90° para a esquerda.')).toBeInTheDocument();
     expect(within(detail).getByLabelText('Código Arduino (somente leitura)')).toBeInTheDocument();
-    expect(await within(detail).findByText('Esta função não recebe parâmetros.')).toBeInTheDocument();
+    expect(await within(detail).findByText('Nenhum — é só chamar e pronto!')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['botão Fechar', () => fireEvent.click(screen.getByRole('button', { name: 'Fechar' }))],
+    ['botão Voltar', () => fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))],
+    ['tecla Esc', () => fireEvent.keyDown(document, { key: 'Escape' })],
+    ['clique fora', () => fireEvent.click(screen.getByTestId('detail-backdrop'))],
+  ])('fechar a gaveta (%s) remove o detalhe e devolve o foco', (_, close) => {
+    renderPanel();
+    const trigger = openDetail('VireEsquerda');
+
+    close();
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 });

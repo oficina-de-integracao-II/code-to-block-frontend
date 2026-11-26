@@ -89,9 +89,7 @@ export const handlers = [
         descricao: 'Move o robô para frente.',
         codigoArduino: 'void Andar() {\n  analogWrite(5, 128);\n}',
         blocoDefinicao: { type: 'andar', message0: 'Andar' },
-        parametros: [
-          { nome: 'velocidade', tipo: 'int', descricao: 'Velocidade de 0 a 255.' },
-        ],
+        parametros: { velocidade: 128 },
       });
     }
 

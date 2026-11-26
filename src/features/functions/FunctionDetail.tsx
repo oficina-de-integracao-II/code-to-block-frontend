@@ -1,19 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { CodeViewer } from './CodeViewer';
-import {
-  getFunction,
-  type FunctionParameter,
-  type FunctionSummary,
-} from './functionsApi';
+import { CopyCodeButton } from './CopyCodeButton';
+import { dedent } from './formatCode';
+import { getFunction, type FunctionSummary } from './functionsApi';
+import { normalizeParameters } from './normalizeParameters';
+import { useModalDialog } from './useModalDialog';
 
 type ParametersResult = {
   id: number;
-  parametros: FunctionParameter[] | null;
+  parametros: unknown;
   failed: boolean;
 };
 
-export function FunctionDetail({ fn }: { fn: FunctionSummary }) {
+type FunctionDetailProps = {
+  fn: FunctionSummary;
+  onClose: () => void;
+};
+
+function DetailSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section>
+      <h3 className="text-xs font-bold uppercase tracking-wide text-ink-muted">
+        {title}
+      </h3>
+      <div className="mt-1 text-base text-ink">{children}</div>
+    </section>
+  );
+}
+
+export function FunctionDetail({ fn, onClose }: FunctionDetailProps) {
   const [result, setResult] = useState<ParametersResult | null>(null);
+  const { dialogRef, titleRef } = useModalDialog(onClose);
+  const titleId = useId();
 
   useEffect(() => {
     let active = true;
@@ -34,45 +52,90 @@ export function FunctionDetail({ fn }: { fn: FunctionSummary }) {
   }, [fn.id]);
 
   const current = result?.id === fn.id ? result : null;
-  const parametros = Array.isArray(current?.parametros) ? current.parametros : [];
+  const parametros = normalizeParameters(current?.parametros);
 
   return (
-    <article
-      aria-label={`Detalhe de ${fn.nome}`}
-      className="mt-4 flex flex-col gap-3 border-t border-gray-200 pt-4"
-    >
-      <h3 className="text-base font-semibold">{fn.nome}</h3>
+    <>
+      <div
+        data-testid="detail-backdrop"
+        aria-hidden="true"
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-ink/40"
+      />
 
-      <div>
-        <h4 className="text-sm font-semibold">Descrição e comportamento esperado</h4>
-        <p className="mt-1 text-sm text-gray-700">{fn.descricao}</p>
-      </div>
+      <aside
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="fixed inset-y-0 right-0 z-50 flex w-[440px] flex-col bg-surface
+                   shadow-xl max-[769px]:w-full"
+      >
+        <header className="flex items-center gap-3 p-5">
+          <button
+            type="button"
+            aria-label="Voltar"
+            onClick={onClose}
+            className="cursor-pointer text-xl text-ink"
+          >
+            ←
+          </button>
+          <h2
+            ref={titleRef}
+            id={titleId}
+            tabIndex={-1}
+            className="min-w-0 flex-1 truncate font-heading text-xl font-bold
+                       text-ink outline-none"
+          >
+            {fn.nome}
+          </h2>
+          <button
+            type="button"
+            aria-label="Fechar"
+            onClick={onClose}
+            className="cursor-pointer text-xl text-ink"
+          >
+            ✕
+          </button>
+        </header>
 
-      <div>
-        <h4 className="text-sm font-semibold">Parâmetros</h4>
-        {!current && <p className="mt-1 text-sm text-gray-500">Carregando parâmetros...</p>}
-        {current?.failed && (
-          <p role="alert" className="mt-1 text-sm text-red-700">
-            Não foi possível carregar os parâmetros.
-          </p>
-        )}
-        {current && !current.failed && parametros.length === 0 && (
-          <p className="mt-1 text-sm text-gray-500">Esta função não recebe parâmetros.</p>
-        )}
-        {parametros.length > 0 && (
-          <ul className="mt-1 flex flex-col gap-1 text-sm">
-            {parametros.map((param) => (
-              <li key={param.nome}>
-                <code className="font-semibold">{param.nome}</code>
-                {param.tipo && <span className="text-gray-500"> ({param.tipo})</span>}
-                {param.descricao && <span> — {param.descricao}</span>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 pb-5">
+          <DetailSection title="Descrição">
+            <p>{fn.descricao}</p>
+          </DetailSection>
 
-      <CodeViewer code={fn.codigoArduino} />
-    </article>
+          <DetailSection title="Parâmetros">
+            {!current && <p className="text-ink-muted">Carregando parâmetros...</p>}
+            {current?.failed && (
+              <p role="alert" className="text-danger-text">
+                Não foi possível carregar os parâmetros.
+              </p>
+            )}
+            {current && !current.failed && parametros.length === 0 && (
+              <p>Nenhum — é só chamar e pronto!</p>
+            )}
+            {parametros.length > 0 && (
+              <ul className="flex flex-col gap-1">
+                {parametros.map((param, index) => (
+                  <li key={`${param.nome}-${index}`}>
+                    <code className="font-bold">{param.nome}</code>
+                    {param.tipo && <span className="text-ink-muted"> ({param.tipo})</span>}
+                    {param.descricao && <span> — {param.descricao}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DetailSection>
+
+          {/* TODO: seção "Comportamento" quando a API tiver um campo próprio. */}
+
+          <CodeViewer code={fn.codigoArduino} />
+        </div>
+
+        <footer className="px-5 pt-3 pb-6">
+          <CopyCodeButton text={dedent(fn.codigoArduino)} />
+        </footer>
+      </aside>
+    </>
   );
 }
