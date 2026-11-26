@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FunctionsContext, type FunctionsContextValue } from './FunctionsContext';
 import type { FunctionSummary } from './functionsApi';
@@ -16,8 +16,8 @@ function makeFunction(id: number, nome: string, descricao: string): FunctionSumm
 
 const catalog = [
   makeFunction(1, 'Andar', 'Move o robô para frente.'),
-  makeFunction(2, 'ParaTras', 'Move o robô para trás.'),
-  makeFunction(3, 'VireEsquerda', 'Gira o robô 90° para a esquerda.'),
+  makeFunction(9, 'ParaTras', 'Move o robô para trás.'),
+  makeFunction(2, 'VireEsquerda', 'Gira o robô 90° para a esquerda.'),
 ];
 
 function renderPanel(overrides: Partial<FunctionsContextValue> = {}) {
@@ -99,5 +99,42 @@ describe('FunctionsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
 
     expect(value.reload).toHaveBeenCalledTimes(1);
+  });
+
+  function openDetail(nome: string) {
+    const trigger = screen.getByRole('button', { name: `Ver detalhes de ${nome}` });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    return trigger;
+  }
+
+  it('selecionar uma função exibe seu código e descrição', async () => {
+    renderPanel();
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    openDetail('VireEsquerda');
+
+    const detail = screen.getByRole('dialog', { name: 'VireEsquerda' });
+
+    expect(within(detail).getByText('Gira o robô 90° para a esquerda.')).toBeInTheDocument();
+    expect(within(detail).getByLabelText('Código Arduino (somente leitura)')).toBeInTheDocument();
+    expect(await within(detail).findByText('Nenhum — é só chamar e pronto!')).toBeInTheDocument();
+  });
+
+  it.each([
+    ['botão Fechar', () => fireEvent.click(screen.getByRole('button', { name: 'Fechar' }))],
+    ['botão Voltar', () => fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))],
+    ['tecla Esc', () => fireEvent.keyDown(document, { key: 'Escape' })],
+    ['clique fora', () => fireEvent.click(screen.getByTestId('detail-backdrop'))],
+  ])('fechar a gaveta (%s) remove o detalhe e devolve o foco', (_, close) => {
+    renderPanel();
+    const trigger = openDetail('VireEsquerda');
+
+    close();
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 });

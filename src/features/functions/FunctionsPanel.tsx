@@ -1,6 +1,7 @@
 import { useId, useMemo, useState } from 'react';
 import infoIcon from '../../assets/icons/info.svg';
 import magnifyingGlassIcon from '../../assets/icons/magnifying-glass.svg';
+import { FunctionDetail } from './FunctionDetail';
 import { useFunctions } from './FunctionsContext';
 
 function normalize(text: string) {
@@ -14,6 +15,9 @@ export function FunctionsPanel() {
   const { functions, loading, error, reload } = useFunctions();
   const [query, setQuery] = useState('');
   const searchId = useId();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
+  const selected = functions.find((fn) => fn.id === selectedId) ?? null;
 
   const filtered = useMemo(() => {
     const term = normalize(query.trim());
@@ -94,11 +98,28 @@ export function FunctionsPanel() {
               className="flex items-center gap-2 rounded-[8px] px-2.5 py-2"
             >
               <span className="min-w-0 flex-1 text-base text-ink">{fn.nome}</span>
-              <img src={infoIcon} alt="" className="size-4 shrink-0" />
+              <button
+                type="button"
+                aria-label={`Ver detalhes de ${fn.nome}`}
+                aria-haspopup="dialog"
+                onClick={() => setSelectedId(fn.id)}
+                className="shrink-0 cursor-pointer rounded-full p-1
+                           hover:bg-bg"
+              >
+                <img src={infoIcon} alt="" className="size-4" />
+              </button>
               <span className="sr-only">{fn.descricao}</span>
             </li>
           ))}
         </ul>
+      )}
+
+      {selected && (
+        <FunctionDetail
+          key={selected.id}
+          fn={selected}
+          onClose={() => setSelectedId(null)}
+        />
       )}
     </section>
   );

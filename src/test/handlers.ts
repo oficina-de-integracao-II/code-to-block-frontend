@@ -81,6 +81,32 @@ export const handlers = [
     ]);
   }),
 
+  http.get('http://localhost:3000/functions/:id', ({ params }) => {
+    if (params.id === '1') {
+      return HttpResponse.json({
+        id: 1,
+        nome: 'Andar',
+        descricao: 'Move o robô para frente.',
+        codigoArduino: 'void Andar() {\n  analogWrite(5, 128);\n}',
+        blocoDefinicao: { type: 'andar', message0: 'Andar' },
+        parametros: { velocidade: 128 },
+      });
+    }
+
+    if (params.id === '2') {
+      return HttpResponse.json({
+        id: 2,
+        nome: 'VireEsquerda',
+        descricao: 'Gira o robô 90° para a esquerda.',
+        codigoArduino: 'void VireEsquerda() {}',
+        blocoDefinicao: { type: 'vire_esquerda', message0: 'Vire à esquerda' },
+        parametros: null,
+      });
+    }
+
+    return HttpResponse.json({ message: 'Função não encontrada' }, { status: 404 });
+  }),
+
   http.get('http://localhost:3000/api/blocks', () => {
     return HttpResponse.json({
       blocks: [
