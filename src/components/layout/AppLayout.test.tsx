@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { AuthProvider } from '../../features/auth/AuthProvider';
+import { FunctionsProvider } from '../../features/functions/FunctionsProvider';
 import { AppLayout } from './AppLayout';
 
 describe('AppLayout', () => {
@@ -9,7 +10,9 @@ describe('AppLayout', () => {
     render(
       <MemoryRouter>
         <AuthProvider>
-          <AppLayout />
+          <FunctionsProvider>
+            <AppLayout />
+          </FunctionsProvider>
         </AuthProvider>
       </MemoryRouter>,
     );

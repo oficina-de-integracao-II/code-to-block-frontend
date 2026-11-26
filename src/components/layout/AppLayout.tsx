@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { FunctionsPanel } from '../../features/functions/FunctionsPanel';
 import { LogoutButton } from '../../features/auth/LogoutButton';
 
 export function AppLayout() {
@@ -9,18 +10,10 @@ export function AppLayout() {
         <LogoutButton />
       </header>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-[1fr_0.8fr]">
-        <div className="flex min-w-0 flex-col gap-4">
-          <section
-            aria-label="Painel de funções"
-            className="rounded-lg border border-gray-200 bg-white p-4"
-          >
-            <h2 className="text-lg font-semibold">Funções</h2>
-            <p className="mt-2 text-sm text-gray-500">
-              Funções disponíveis
-            </p>
-          </section>
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[340px_1fr_0.8fr]">
+        <FunctionsPanel />
 
+        <div className="flex min-w-0 flex-col gap-4">
           <section
             aria-label="Editor"
             className="rounded-lg border border-gray-200 bg-white p-4"
