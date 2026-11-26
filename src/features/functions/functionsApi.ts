@@ -20,3 +20,18 @@ export type FunctionSummary = {
 export function listFunctions() {
   return api.get<FunctionSummary[]>('/functions');
 }
+
+export type FunctionParameter = {
+  nome: string;
+  tipo?: string;
+  descricao?: string;
+};
+
+/** `parametros` é JSON livre e opcional no contrato (openapi.yaml). */
+export type FunctionDetails = FunctionSummary & {
+  parametros?: unknown;
+};
+
+export function getFunction(id: number) {
+  return api.get<FunctionDetails>(`/functions/${id}`);
+}
