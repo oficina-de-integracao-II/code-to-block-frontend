@@ -11,11 +11,17 @@
   --color-sun: #f7ca1b;
   --color-soft-warn: #ffe9b8;
   --color-warn-text: #9a4a00;
+  --color-divider: #e5e8f2;
+  --color-editor-bg: #16263f;
+  --color-code-text: #d9deeb;
+  --color-code-keyword: #8fc7ff;
+  --color-code-function: #ffd966;
 
   --radius-16: 16px;
 
   --font-heading: 'Baloo 2', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 :root {

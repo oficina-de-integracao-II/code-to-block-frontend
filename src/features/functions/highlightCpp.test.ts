@@ -15,6 +15,8 @@ describe('highlightCpp', () => {
     expect(typeOf(code, '128')).toBe('number');
     expect(typeOf(code, 'HIGH')).toBe('constant');
     expect(typeOf(code, '"oi"')).toBe('string');
+    expect(typeOf(code, 'Andar')).toBe('function');
+    expect(typeOf(code, 'analogWrite')).toBe('plain');
   });
 
   it('preserva o texto original ao juntar os tokens', () => {

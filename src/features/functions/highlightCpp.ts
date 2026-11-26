@@ -5,6 +5,7 @@ export type TokenType =
   | 'keyword'
   | 'type'
   | 'constant'
+  | 'function'
   | 'number'
   | 'plain';
 
@@ -52,6 +53,7 @@ function push(tokens: Token[], type: TokenType, text: string) {
 export function highlightCpp(code: string): Token[] {
   const tokens: Token[] = [];
   let cursor = 0;
+  let afterType = false;
 
   for (const match of code.matchAll(TOKEN_PATTERN)) {
     const start = match.index;
@@ -67,7 +69,11 @@ export function highlightCpp(code: string): Token[] {
     else if (identifier && KEYWORDS.has(identifier)) push(tokens, 'keyword', text);
     else if (identifier && TYPES.has(identifier)) push(tokens, 'type', text);
     else if (identifier && CONSTANTS.has(identifier)) push(tokens, 'constant', text);
-    else push(tokens, 'plain', text);
+    else if (identifier && afterType && /^\s*\(/.test(code.slice(start + text.length))) {
+      push(tokens, 'function', text);
+    } else push(tokens, 'plain', text);
+
+    afterType = Boolean(identifier) && TYPES.has(identifier);
 
     cursor = start + text.length;
   }
