@@ -56,7 +56,7 @@ function advance(from: Position, text: string): Position {
     : { line: from.line + lines.length - 1, column: lastLength + 1 };
 }
 
-/** Divide o texto em tokens, descartando espaços e comentários. */
+/** Divide o texto em tokens, descartando espaços e comentários fechados. */
 export function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
   let offset = 0;

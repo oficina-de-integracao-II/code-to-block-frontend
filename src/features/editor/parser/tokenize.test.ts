@@ -27,6 +27,12 @@ describe('tokenize', () => {
     expect(tokenize('🤖').map((token) => token.value)).toEqual(['🤖']);
   });
 
+  it('não reaproveita o asterisco de abertura para fechar o comentário', () => {
+    expect(tokenize('/*/').map((token) => token.type)).toEqual([
+      'unclosedComment',
+    ]);
+  });
+
   it('descarta espaços e comentários', () => {
     expect(tokenize(' \n// a\n/* b */\t')).toEqual([]);
   });
