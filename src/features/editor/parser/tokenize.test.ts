@@ -27,7 +27,30 @@ describe('tokenize', () => {
     expect(tokenize('🤖').map((token) => token.value)).toEqual(['🤖']);
   });
 
+  it('não reaproveita o asterisco de abertura para fechar o comentário', () => {
+    expect(tokenize('/*/').map((token) => token.type)).toEqual([
+      'unclosedComment',
+    ]);
+  });
+
   it('descarta espaços e comentários', () => {
     expect(tokenize(' \n// a\n/* b */\t')).toEqual([]);
+  });
+
+  it('transforma comentário de bloco não fechado em um token até o fim', () => {
+    expect(tokenize('Pare /* a\nb')).toEqual([
+      {
+        type: 'identifier',
+        value: 'Pare',
+        start: { line: 1, column: 1 },
+        end: { line: 1, column: 5 },
+      },
+      {
+        type: 'unclosedComment',
+        value: '/* a\nb',
+        start: { line: 1, column: 6 },
+        end: { line: 2, column: 2 },
+      },
+    ]);
   });
 });

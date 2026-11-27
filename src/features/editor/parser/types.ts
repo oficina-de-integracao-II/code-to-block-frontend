@@ -21,6 +21,7 @@ export type TokenType =
   | 'leftParen'
   | 'rightParen'
   | 'semicolon'
+  | 'unclosedComment'
   | 'unknown';
 
 export type Token = SourceRange & {

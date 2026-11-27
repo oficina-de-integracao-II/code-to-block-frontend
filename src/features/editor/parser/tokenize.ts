@@ -13,8 +13,11 @@ const RULES: Rule[] = [
   { type: null, pattern: /\s+/y },
   // Comentário de linha.
   { type: null, pattern: /\/\/[^\r\n]*/y },
-  // Comentário de bloco; sem `*/`, vai até o fim do texto.
-  { type: null, pattern: /\/\*[\s\S]*?(?:\*\/|$)/y },
+  // Comentário de bloco.
+  { type: null, pattern: /\/\*[\s\S]*?\*\//y },
+  // Comentário de bloco sem `*/`: vai até o fim do texto e vira um token,
+  // para que a validação possa avisar (o `parseCalls` o ignora).
+  { type: 'unclosedComment', pattern: /\/\*[\s\S]*/y },
   // Literais de texto e de caractere viram um token só, para que o conteúdo
   // não seja lido como código. Sem a aspa final, param no fim da linha.
   { type: 'unknown', pattern: /"(?:\\.|[^"\\\r\n])*"?/y },
@@ -53,7 +56,7 @@ function advance(from: Position, text: string): Position {
     : { line: from.line + lines.length - 1, column: lastLength + 1 };
 }
 
-/** Divide o texto em tokens, descartando espaços e comentários. */
+/** Divide o texto em tokens, descartando espaços e comentários fechados. */
 export function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
   let offset = 0;
