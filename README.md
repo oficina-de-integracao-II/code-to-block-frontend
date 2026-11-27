@@ -178,7 +178,7 @@ O contrato OpenAPI do backend está em `openapi.yaml` no repositório `code-to-b
 
 O Vitest utiliza o provider V8 para gerar relatórios em texto e HTML.
 
-A meta planejada é de pelo menos 70% de cobertura nos módulos `features/editor` e `features/blocks`. Os limites serão aplicados no CI quando a estrutura dessas funcionalidades estiver disponível.
+A meta é de pelo menos 70% de cobertura nos módulos `features/editor` e `features/blocks`. O parser (`src/features/editor/parser/`) já tem limite de 90% em `vite.config.ts`, verificado no CI pelo `npm run test:cov`.
 
 ### Integração contínua
 
