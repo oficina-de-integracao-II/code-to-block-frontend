@@ -216,6 +216,67 @@ describe('validateCode: entrada mista', () => {
   });
 });
 
+describe('validateCode: casos apontados na revisão', () => {
+  /** Resume o resultado em `[código, linha, coluna]` e nomes válidos. */
+  function summary(source: string) {
+    const { calls, errors } = validate(source);
+
+    return {
+      errors: errors.map(({ code, start }) => [code, start.line, start.column]),
+      calls: calls.map((call) => call.name),
+    };
+  }
+
+  it.each([
+    [
+      'sem ";" e sem "()" na linha seguinte',
+      'Andar()\nPare;',
+      [['missingSemicolon', 1, 8], ['missingParens', 2, 1]],
+      [],
+    ],
+    [
+      'dois nomes sem "()" em linhas seguidas',
+      'Pare\nAndar;',
+      [['missingParens', 1, 1], ['missingParens', 2, 1]],
+      [],
+    ],
+    [
+      'símbolo solto antes de um comando válido',
+      '@\nPare();',
+      [['unexpectedToken', 1, 1]],
+      ['Pare'],
+    ],
+    [
+      'comentário não fechado depois de um erro',
+      'Andar()\n/* oi\nPare();',
+      [['missingSemicolon', 1, 8], ['unclosedComment', 2, 1]],
+      [],
+    ],
+  ] as const)('acusa cada linha: %s', (_caso, source, errors, calls) => {
+    expect(summary(source)).toEqual({ errors, calls });
+  });
+
+  it.each([
+    ['chamada aninhada', 'Andar(Pare());', 'Pare', [1, 7]],
+    ['argumento e chamada aninhada', 'Andar(2, Pare());', '2', [1, 7]],
+    ['parêntese fechado em outra linha', 'Andar(\n  2\n);', '2', [2, 3]],
+    ['parêntese sobrando', 'Andar());', ')', [1, 8]],
+    ['caractere antes do ";"', 'Andar()x;', 'x', [1, 8]],
+  ] as const)(
+    'gera um só erro, no trecho que sobrou: %s',
+    (_caso, source, value, [line, column]) => {
+      expect(errorsOf(`${source}\nPare();`)).toEqual([
+        error(
+          'unexpectedToken',
+          [line, column],
+          `Hmm, não esperava "${value}" aqui. (linha ${line}, coluna ${column})`,
+        ),
+      ]);
+      expect(callNames(`${source}\nPare();`)).toEqual(['Pare']);
+    },
+  );
+});
+
 describe('validateCode: entradas malformadas', () => {
   // Gerador com semente fixa: os casos são aleatórios, mas sempre os mesmos.
   function random(seed: number) {

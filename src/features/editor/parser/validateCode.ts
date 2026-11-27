@@ -66,88 +66,120 @@ function startsCommand(tokens: Token[], index: number) {
 }
 
 /**
- * Indica se o `(` em `openIndex` é fechado mais adiante, na mesma linha e
- * antes do fim do comando. Diferencia `Andar(x);` de `Andar(`.
+ * Índice do `)` que fecha o `(` em `openIndex`, contando parênteses
+ * aninhados, mesmo em outra linha. Para no `;` que encerra o comando:
+ * sem `)` até ali, retorna -1 (o parêntese ficou aberto).
  */
-function closesLaterOnLine(tokens: Token[], openIndex: number) {
-  const line = tokens[openIndex].start.line;
+function findClosingParen(tokens: Token[], openIndex: number) {
+  let depth = 0;
 
-  for (let i = openIndex + 1; i < tokens.length; i += 1) {
-    const token = tokens[i];
-    const commandEnded =
-      token.start.line !== line ||
-      token.type === 'semicolon' ||
-      startsCommand(tokens, i);
+  for (let i = openIndex; i < tokens.length; i += 1) {
+    const { type } = tokens[i];
 
-    if (commandEnded) return false;
-    if (token.type === 'rightParen') return true;
+    if (type === 'semicolon') return -1;
+    if (type === 'leftParen') depth += 1;
+    if (type === 'rightParen') {
+      depth -= 1;
+      if (depth === 0) return i;
+    }
+  }
+
+  return -1;
+}
+
+/**
+ * Indica se, a partir de `from`, há um `;` na mesma linha do token anterior,
+ * antes de outro comando. Diferencia `Andar()x;` (sobrou o `x`) de
+ * `Andar() Pare();` e de `Andar()` seguido de outra linha.
+ */
+function semicolonLaterOnLine(tokens: Token[], from: number) {
+  const line = tokens[from - 1].end.line;
+
+  for (let i = from; i < tokens.length; i += 1) {
+    if (tokens[i].start.line !== line || startsCommand(tokens, i)) break;
+    if (tokens[i].type === 'semicolon') return true;
   }
 
   return false;
 }
 
+/**
+ * Depois de um erro, pula o resto do comando quebrado: para logo após o
+ * próximo `;`, no início do próximo comando ou na troca de linha. Assim um
+ * erro não vira vários, e as linhas seguintes continuam sendo lidas.
+ */
+function skipBrokenCommand(tokens: Token[], index: number) {
+  const line = tokens[index - 1].end.line;
+  let i = index;
+
+  while (
+    i < tokens.length &&
+    tokens[i].start.line === line &&
+    !startsCommand(tokens, i)
+  ) {
+    if (tokens[i].type === 'semicolon') return i + 1;
+    i += 1;
+  }
+
+  return i;
+}
+
 /** Lê um comando `Nome();` a partir de `index` e aponta o 1º problema. */
 function readCommand(tokens: Token[], index: number): CommandRead {
-  const [name, open, close, semicolon] = tokens.slice(index, index + 4);
+  const broken = (error: Diagnostic, from: number): CommandRead => ({
+    ok: false,
+    error,
+    next: skipBrokenCommand(tokens, from),
+  });
+  const name = tokens[index];
+  const open = tokens[index + 1];
 
-  if (name.type !== 'identifier') {
-    return { ok: false, error: unexpected(name), next: index + 1 };
-  }
+  if (name.type !== 'identifier') return broken(unexpected(name), index + 1);
 
   if (open?.type !== 'leftParen') {
-    const error = diagnostic(
-      'missingParens',
-      name,
-      `Faltou o "()" depois de "${name.value}".`,
-    );
-    return { ok: false, error, next: index + 1 };
+    const text = `Faltou o "()" depois de "${name.value}".`;
+    return broken(diagnostic('missingParens', name, text), index + 1);
   }
 
-  if (close?.type !== 'rightParen') {
-    const error = closesLaterOnLine(tokens, index + 1)
-      ? unexpected(close)
-      : diagnostic(
-          'unclosedParen',
-          open,
-          `Faltou fechar o parêntese de "${name.value}(".`,
-        );
-    return { ok: false, error, next: index + 2 };
+  const closeIndex = findClosingParen(tokens, index + 1);
+
+  if (closeIndex === -1) {
+    const text = `Faltou fechar o parêntese de "${name.value}(".`;
+    return broken(diagnostic('unclosedParen', open, text), index + 2);
   }
 
-  if (semicolon?.type !== 'semicolon') {
-    // O ";" deveria vir logo depois do ")": é essa a posição apontada.
+  const close = tokens[closeIndex];
+  const after = tokens[closeIndex + 1];
+
+  if (closeIndex > index + 2) {
+    // Algo entre os parênteses, como em `Andar(Pare());`: um só erro, no
+    // primeiro token, e o comando inteiro (com o `;`) é descartado.
+    const hasSemicolon = after?.type === 'semicolon';
+    const next = closeIndex + (hasSemicolon ? 2 : 1);
+    return { ok: false, error: unexpected(tokens[index + 2]), next };
+  }
+
+  if (after?.type !== 'semicolon') {
+    // Sobrou algo antes do `;` da linha, como em `Andar()x;`.
+    if (after && semicolonLaterOnLine(tokens, closeIndex + 1)) {
+      return broken(unexpected(after), closeIndex + 1);
+    }
+
+    // O ";" deveria vir logo depois do ")": é essa a posição apontada. O
+    // comando já foi lido por inteiro, então a leitura segue no próximo.
     const spot = { start: close.end, end: close.end };
-    const error = diagnostic(
-      'missingSemicolon',
-      spot,
-      `Faltou o ";" no fim de "${name.value}()".`,
-    );
-    return { ok: false, error, next: index + 3 };
+    const text = `Faltou o ";" no fim de "${name.value}()".`;
+    const error = diagnostic('missingSemicolon', spot, text);
+    return { ok: false, error, next: closeIndex + 1 };
   }
 
   const call: FunctionCallNode = {
     type: 'FunctionCall',
     name: name.value,
     start: name.start,
-    end: semicolon.end,
+    end: after.end,
   };
-  return { ok: true, call, next: index + 4 };
-}
-
-/**
- * Depois de um erro, pula o resto do comando quebrado: para logo após o
- * próximo `;` ou no início do próximo comando. Assim um erro não vira
- * vários.
- */
-function skipBrokenCommand(tokens: Token[], index: number) {
-  let i = index;
-
-  while (i < tokens.length && !startsCommand(tokens, i)) {
-    if (tokens[i].type === 'semicolon') return i + 1;
-    i += 1;
-  }
-
-  return i;
+  return { ok: true, call, next: closeIndex + 2 };
 }
 
 /** Marca o comando inteiro, como o sublinhado do protótipo. */
@@ -186,11 +218,7 @@ export function validateCode(
 
     if (!read.ok) {
       errors.push(read.error);
-      index = skipBrokenCommand(tokens, read.next);
-      continue;
-    }
-
-    if (known.has(read.call.name)) {
+    } else if (known.has(read.call.name)) {
       calls.push(read.call);
     } else {
       errors.push(unknownFunction(read.call, knownNames));
