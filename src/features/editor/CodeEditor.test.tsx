@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { TOKEN_KEY } from '../../services/api';
 import { AuthContext } from '../auth/AuthContext';
@@ -63,6 +64,37 @@ describe('CodeEditor', () => {
     await user.type(screen.getByLabelText('Editor de código'), 'Andar();');
 
     expect(screen.getByTestId('code-state')).toHaveTextContent('Andar();');
+  });
+
+  it('mantém a ordem das chamadas inseridas antes de o editor montar', async () => {
+    const user = userEvent.setup();
+
+    function LateEditor() {
+      const { insertFunctionCall } = useEditor();
+      const [mounted, setMounted] = useState(false);
+
+      return (
+        <>
+          <button type="button" onClick={() => insertFunctionCall('Andar')}>Andar</button>
+          <button type="button" onClick={() => insertFunctionCall('Pare')}>Pare</button>
+          <button type="button" onClick={() => setMounted(true)}>Montar</button>
+          {mounted && <CodeEditor />}
+          <CodeState />
+        </>
+      );
+    }
+
+    render(
+      <EditorProvider>
+        <LateEditor />
+      </EditorProvider>,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Andar' }));
+    await user.click(screen.getByRole('button', { name: 'Montar' }));
+    await user.click(screen.getByRole('button', { name: 'Pare' }));
+
+    expect(screen.getByTestId('code-state')).toHaveTextContent('Andar();Pare();');
   });
 
   it('insere a chamada da função clicada na posição do cursor', async () => {

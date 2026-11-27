@@ -4,6 +4,13 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: [
+      // O Monaco traz uma cópia própria do DOMPurify, que o `overrides` do
+      // package.json não alcança. Aponta essa cópia para o pacote instalado.
+      { find: /^\.\/dompurify\/dompurify\.js$/, replacement: 'dompurify' },
+    ],
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',

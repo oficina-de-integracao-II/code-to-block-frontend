@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useEditor } from '../../features/editor/EditorContext';
+import { EditorErrorBoundary } from '../../features/editor/EditorErrorBoundary';
 import { FunctionsPanel } from '../../features/functions/FunctionsPanel';
 import { LogoutButton } from '../../features/auth/LogoutButton';
 
@@ -19,23 +20,30 @@ export function AppLayout() {
         <LogoutButton />
       </header>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[340px_minmax(0,1fr)_480px]">
+      {/* Colunas do protótipo (340 | editor | 480) só a partir de 1280px; abaixo
+          disso os blocos descem para o editor não ficar estreito demais. */}
+      <div
+        className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)]
+                   xl:grid-cols-[340px_minmax(0,1fr)_480px]"
+      >
         <FunctionsPanel onSelectFunction={insertFunctionCall} />
 
         <section aria-label="Editor" className="bg-editor-bg">
           <div data-testid="editor-area" className="h-[70vh] min-h-96">
-            <Suspense
-              fallback={<p className="p-5 text-sm text-editor-gutter">Carregando editor...</p>}
-            >
-              <CodeEditor />
-            </Suspense>
+            <EditorErrorBoundary>
+              <Suspense
+                fallback={<p className="p-5 text-sm text-editor-gutter">Carregando editor...</p>}
+              >
+                <CodeEditor />
+              </Suspense>
+            </EditorErrorBoundary>
           </div>
         </section>
 
         <section
           aria-label="Painel de blocos"
           className="min-h-96 rounded-lg border border-gray-200
-                     bg-white p-4"
+                     bg-white p-4 lg:col-span-2 xl:col-span-1"
         >
           <h2 className="text-lg font-semibold">Blocos</h2>
           <div
