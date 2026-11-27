@@ -46,6 +46,7 @@ A implementação dessas funcionalidades ocorrerá nas próximas etapas do proje
 |---|---|
 | Framework | React |
 | Linguagem | TypeScript |
+| Editor de código | Monaco Editor (`@monaco-editor/react`) |
 | Build e desenvolvimento | Vite |
 | Testes unitários e de componentes | Vitest |
 | Testes de interface | React Testing Library |
@@ -57,7 +58,7 @@ A implementação dessas funcionalidades ocorrerá nas próximas etapas do proje
 | Formatação | Prettier |
 | CI | GitHub Actions |
 
-Monaco Editor, Blockly e demais tecnologias funcionais serão integrados conforme o desenvolvimento da aplicação. Autenticação (cadastro, login, contexto de sessão) e cliente HTTP já estão integrados.
+Blockly e demais tecnologias funcionais serão integrados conforme o desenvolvimento da aplicação. O Monaco Editor já está integrado em `features/editor`: é empacotado localmente pelo Vite (sem CDN), carregado sob demanda na área de trabalho, e o código digitado fica disponível via `useEditor()`. Nos testes, o Monaco é substituído por um `<textarea>` (`src/test/monacoMock.tsx`), registrado em `src/test/setup.ts`. Autenticação (cadastro, login, contexto de sessão) e cliente HTTP já estão integrados.
 
 ## Estrutura de Pastas
 

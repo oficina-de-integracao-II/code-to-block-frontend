@@ -11,7 +11,11 @@ function normalize(text: string) {
     .toLowerCase();
 }
 
-export function FunctionsPanel() {
+type FunctionsPanelProps = {
+  onSelectFunction?: (functionName: string) => void;
+};
+
+export function FunctionsPanel({ onSelectFunction }: FunctionsPanelProps) {
   const { functions, loading, error, reload } = useFunctions();
   const [query, setQuery] = useState('');
   const searchId = useId();
@@ -97,7 +101,14 @@ export function FunctionsPanel() {
               title={fn.descricao}
               className="flex items-center gap-2 rounded-[8px] px-2.5 py-2"
             >
-              <span className="min-w-0 flex-1 text-base text-ink">{fn.nome}</span>
+              <button
+                type="button"
+                aria-label={`Inserir ${fn.nome}`}
+                onClick={() => onSelectFunction?.(fn.nome)}
+                className="min-w-0 flex-1 cursor-pointer text-left text-base text-ink"
+              >
+                {fn.nome}
+              </button>
               <button
                 type="button"
                 aria-label={`Ver detalhes de ${fn.nome}`}
