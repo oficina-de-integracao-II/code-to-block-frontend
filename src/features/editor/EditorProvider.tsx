@@ -11,6 +11,13 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const registerEditor = useCallback((instance: CodeEditorInstance | null) => {
     editorRef.current = instance;
+
+    // O Monaco abre com o cursor no início. Leva o cursor ao fim para que as
+    // chamadas inseridas antes de ele montar continuem na ordem dos cliques.
+    const model = instance?.getModel();
+    if (instance && model) {
+      instance.setPosition(model.getFullModelRange().getEndPosition());
+    }
   }, []);
 
   const insertFunctionCall = useCallback((functionName: string) => {
@@ -24,9 +31,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }
 
     // A edição dispara o onChange do editor, que atualiza o estado `code`.
+    // Os undo stops fazem o Ctrl+Z desfazer só esta inserção.
+    editor.pushUndoStop();
     editor.executeEdits('functions-panel', [
       { range: selection, text, forceMoveMarkers: true },
     ]);
+    editor.pushUndoStop();
     editor.focus();
   }, []);
 

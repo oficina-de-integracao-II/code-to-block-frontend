@@ -13,3 +13,9 @@ self.MonacoEnvironment = {
 loader.config({ monaco });
 
 monaco.editor.defineTheme(EDITOR_THEME_NAME, editorTheme);
+
+// A JetBrains Mono vem do Google Fonts com `display=swap` e pode chegar depois
+// de o editor medir os caracteres. Medir de novo evita cursor desalinhado.
+void document.fonts
+  .load("18px 'JetBrains Mono'")
+  .then(() => monaco.editor.remeasureFonts());

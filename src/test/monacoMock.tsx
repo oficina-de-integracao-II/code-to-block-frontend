@@ -4,7 +4,8 @@ import type { EditorProps } from '@monaco-editor/react';
 /**
  * Substitui o Monaco nos testes por um <textarea>, já que o jsdom não
  * suporta o editor real. Simula apenas o necessário: onChange, onMount
- * e uma instância com getSelection, executeEdits e focus.
+ * e uma instância com getSelection, executeEdits, focus, getModel,
+ * setPosition e pushUndoStop.
  */
 export function MockMonacoEditor({ defaultValue, onChange, onMount, options }: EditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -15,6 +16,12 @@ export function MockMonacoEditor({ defaultValue, onChange, onMount, options }: E
     const instance = {
       getSelection: () => ({}),
       focus: () => textarea.focus(),
+      pushUndoStop: () => true,
+      // O cursor do textarea faz o papel da posição do Monaco.
+      getModel: () => ({
+        getFullModelRange: () => ({ getEndPosition: () => textarea.value.length }),
+      }),
+      setPosition: (offset: number) => textarea.setSelectionRange(offset, offset),
       executeEdits: (_source: string, edits: { text: string }[]) => {
         const { selectionStart, selectionEnd, value: current } = textarea;
         const next = current.slice(0, selectionStart) + edits[0].text + current.slice(selectionEnd);
