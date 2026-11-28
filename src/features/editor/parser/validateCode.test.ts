@@ -262,6 +262,8 @@ describe('validateCode: casos apontados na revisão', () => {
     ['parêntese fechado em outra linha', 'Andar(\n  2\n);', '2', [2, 3]],
     ['parêntese sobrando', 'Andar());', ')', [1, 8]],
     ['caractere antes do ";"', 'Andar()x;', 'x', [1, 8]],
+    ['argumento e caractere antes do ";"', 'Andar(2)x;', '2', [1, 7]],
+    ['argumento e parêntese sobrando', 'Andar(2));', '2', [1, 7]],
   ] as const)(
     'gera um só erro, no trecho que sobrou: %s',
     (_caso, source, value, [line, column]) => {
