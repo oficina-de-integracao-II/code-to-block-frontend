@@ -1,8 +1,10 @@
 import Editor, { type OnMount } from '@monaco-editor/react';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './monacoSetup';
-import { useEditor } from './EditorContext';
+import { useEditor, type MountedEditor } from './EditorContext';
 import { EDITOR_THEME_NAME } from './editorTheme';
+import { useErrorMarkers } from './useErrorMarkers';
+import { useFunctionSuggestions } from './useFunctionSuggestions';
 
 const EDITOR_OPTIONS = {
   fontFamily: "'JetBrains Mono', monospace",
@@ -18,15 +20,28 @@ const EDITOR_OPTIONS = {
   renderLineHighlight: 'none' as const,
   scrollBeyondLastLine: false,
   automaticLayout: true,
-  // Sugestões virão só do catálogo de funções (FE-17), não de palavras soltas.
+  // Sugestões só do catálogo de funções (useFunctionSuggestions), não de palavras soltas.
   wordBasedSuggestions: 'off' as const,
+  // Lista de sugestões do protótipo: sem ícones, nome e descrição em duas linhas.
+  suggest: { showIcons: false },
+  suggestFontSize: 16,
+  suggestLineHeight: 57,
+  // Mensagem de erro abaixo do comando, como no protótipo.
+  hover: { above: false },
   ariaLabel: 'Editor de código',
 };
 
 export function CodeEditor() {
   const { code, setCode, registerEditor } = useEditor();
+  const [mounted, setMounted] = useState<MountedEditor | null>(null);
 
-  const handleMount: OnMount = (instance) => registerEditor(instance);
+  const handleMount: OnMount = (instance, monaco) => {
+    registerEditor(instance);
+    setMounted({ editor: instance, monaco });
+  };
+
+  useErrorMarkers(mounted, code);
+  useFunctionSuggestions(mounted);
 
   useEffect(() => () => registerEditor(null), [registerEditor]);
 

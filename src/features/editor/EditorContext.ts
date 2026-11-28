@@ -1,7 +1,14 @@
+import type { Monaco } from '@monaco-editor/react';
 import { createContext, useContext } from 'react';
 import type { editor } from 'monaco-editor';
 
 export type CodeEditorInstance = editor.IStandaloneCodeEditor;
+
+/** Editor já montado, com a API do Monaco recebida no `onMount`. */
+export type MountedEditor = {
+  editor: CodeEditorInstance;
+  monaco: Monaco;
+};
 
 export type EditorContextValue = {
   code: string;

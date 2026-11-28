@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { TOKEN_KEY } from '../../services/api';
 import { AuthContext } from '../auth/AuthContext';
+import { FunctionsContext, type FunctionsContextValue } from '../functions/FunctionsContext';
 import { FunctionsPanel } from '../functions/FunctionsPanel';
 import { FunctionsProvider } from '../functions/FunctionsProvider';
 import { CodeEditor } from './CodeEditor';
@@ -31,6 +32,50 @@ function Workspace() {
       <CodeEditor />
       <CodeState />
     </>
+  );
+}
+
+/** Catálogo que ainda está carregando: nenhum nome é conhecido. */
+const loadingCatalog: FunctionsContextValue = {
+  functions: [],
+  functionsByName: new Map(),
+  loading: true,
+  error: null,
+  reload: () => {},
+};
+
+/** Catálogo carregado só com `Pare`. */
+const loadedCatalog: FunctionsContextValue = {
+  ...loadingCatalog,
+  functions: [
+    {
+      id: 1,
+      nome: 'Pare',
+      descricao: 'Para o robô.',
+      codigoArduino: '',
+      blocoDefinicao: { type: 'pare', message0: 'Pare' },
+    },
+  ],
+  loading: false,
+};
+
+/** Editor com um catálogo controlado pelo teste, que pode mudar depois. */
+function renderWithCatalog(catalog: FunctionsContextValue) {
+  const editor = (value: FunctionsContextValue) => (
+    <FunctionsContext.Provider value={value}>
+      <EditorProvider>
+        <CodeEditor />
+      </EditorProvider>
+    </FunctionsContext.Provider>
+  );
+  const { rerender } = render(editor(catalog));
+
+  return { changeCatalog: (next: FunctionsContextValue) => rerender(editor(next)) };
+}
+
+function markers() {
+  return within(screen.getByRole('list', { name: 'Marcadores de erro' })).queryAllByRole(
+    'listitem',
   );
 }
 
@@ -85,9 +130,11 @@ describe('CodeEditor', () => {
     }
 
     render(
-      <EditorProvider>
-        <LateEditor />
-      </EditorProvider>,
+      <FunctionsContext.Provider value={loadingCatalog}>
+        <EditorProvider>
+          <LateEditor />
+        </EditorProvider>
+      </FunctionsContext.Provider>,
     );
 
     await user.click(screen.getByRole('button', { name: 'Andar' }));
@@ -109,5 +156,95 @@ describe('CodeEditor', () => {
 
     expect(screen.getByTestId('code-state')).toHaveTextContent('Andar();VireEsquerda();Pare();');
     expect(editor).toHaveValue('Andar();VireEsquerda();Pare();');
+  });
+});
+
+describe('CodeEditor: marcadores de erro', () => {
+  it('sublinha o comando inválido com a mensagem do parser', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.type(screen.getByLabelText('Editor de código'), 'Andar();\nAndarr();');
+
+    const marker = await screen.findByText(
+      'Hmm, não conheço "Andarr". Você quis dizer "Andar"? (linha 2, coluna 1)',
+    );
+    expect(marker).toHaveAttribute('data-range', '2:1-2:10');
+    // O erro não impede a digitação: o texto continua chegando ao estado.
+    expect(screen.getByTestId('code-state')).toHaveTextContent('Andar(); Andarr();');
+  });
+
+  it('remove o marcador quando o código é corrigido', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    const editor = screen.getByLabelText('Editor de código');
+    await user.type(editor, 'Andar()');
+    expect(markers()).toHaveLength(1);
+
+    await user.type(editor, ';');
+    expect(markers()).toHaveLength(0);
+  });
+
+  it.each([
+    ['carrega', loadingCatalog],
+    ['falha ao carregar', { ...loadingCatalog, loading: false, error: 'Falha ao carregar' }],
+  ])('marca só a sintaxe enquanto o catálogo %s', async (_caso, catalog) => {
+    const user = userEvent.setup();
+    renderWithCatalog(catalog);
+
+    await user.type(screen.getByLabelText('Editor de código'), 'Voar();Pare');
+
+    expect(markers().map((item) => item.textContent)).toEqual([
+      'Faltou o "()" depois de "Pare". (linha 1, coluna 8)',
+    ]);
+  });
+
+  it('marca a função desconhecida quando o catálogo chega, sem nova digitação', async () => {
+    const user = userEvent.setup();
+    const { changeCatalog } = renderWithCatalog(loadingCatalog);
+
+    await user.type(screen.getByLabelText('Editor de código'), 'Voar();');
+    expect(markers()).toHaveLength(0);
+
+    changeCatalog(loadedCatalog);
+
+    expect(markers().map((item) => item.textContent)).toEqual([
+      'Hmm, não conheço "Voar". (linha 1, coluna 1)',
+    ]);
+  });
+});
+
+describe('CodeEditor: sugestões de funções', () => {
+  function suggestions() {
+    return within(screen.getByRole('list', { name: 'Sugestões' }));
+  }
+
+  it('sugere as funções do catálogo filtradas pelo texto, com a descrição', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    // Espera o catálogo carregar, como no app.
+    await screen.findByRole('button', { name: 'Inserir VireEsquerda' });
+
+    await user.type(screen.getByLabelText('Editor de código'), 'Vi');
+
+    expect(suggestions().getAllByRole('button').map((item) => item.textContent)).toEqual([
+      'VireEsquerda',
+    ]);
+    expect(suggestions().getByText('Gira o robô 90° para a esquerda.')).toBeInTheDocument();
+  });
+
+  it('aceitar a sugestão insere "Nome();" no lugar do texto digitado', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    await screen.findByRole('button', { name: 'Inserir VireEsquerda' });
+
+    const editor = screen.getByLabelText('Editor de código');
+    await user.type(editor, 'Andar();Vi');
+    await user.click(suggestions().getByRole('button', { name: 'VireEsquerda' }));
+
+    expect(editor).toHaveValue('Andar();VireEsquerda();');
+    expect(screen.getByTestId('code-state')).toHaveTextContent('Andar();VireEsquerda();');
+    expect(suggestions().queryAllByRole('button')).toHaveLength(0);
   });
 });
