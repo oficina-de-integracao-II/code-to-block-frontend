@@ -214,3 +214,37 @@ describe('CodeEditor: marcadores de erro', () => {
     ]);
   });
 });
+
+describe('CodeEditor: sugestões de funções', () => {
+  function suggestions() {
+    return within(screen.getByRole('list', { name: 'Sugestões' }));
+  }
+
+  it('sugere as funções do catálogo filtradas pelo texto, com a descrição', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    // Espera o catálogo carregar, como no app.
+    await screen.findByRole('button', { name: 'Inserir VireEsquerda' });
+
+    await user.type(screen.getByLabelText('Editor de código'), 'Vi');
+
+    expect(suggestions().getAllByRole('button').map((item) => item.textContent)).toEqual([
+      'VireEsquerda',
+    ]);
+    expect(suggestions().getByText('Gira o robô 90° para a esquerda.')).toBeInTheDocument();
+  });
+
+  it('aceitar a sugestão insere "Nome();" no lugar do texto digitado', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+    await screen.findByRole('button', { name: 'Inserir VireEsquerda' });
+
+    const editor = screen.getByLabelText('Editor de código');
+    await user.type(editor, 'Andar();Vi');
+    await user.click(suggestions().getByRole('button', { name: 'VireEsquerda' }));
+
+    expect(editor).toHaveValue('Andar();VireEsquerda();');
+    expect(screen.getByTestId('code-state')).toHaveTextContent('Andar();VireEsquerda();');
+    expect(suggestions().queryAllByRole('button')).toHaveLength(0);
+  });
+});

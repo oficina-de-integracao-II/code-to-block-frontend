@@ -1,15 +1,8 @@
-import type { Monaco } from '@monaco-editor/react';
 import type { editor, MarkerSeverity } from 'monaco-editor';
 import { useEffect, useMemo } from 'react';
 import { useFunctions } from '../functions/FunctionsContext';
-import type { CodeEditorInstance } from './EditorContext';
+import type { MountedEditor } from './EditorContext';
 import { validateCode, type Diagnostic } from './parser';
-
-/** Editor já montado, com a API do Monaco recebida no `onMount`. */
-export type MountedEditor = {
-  editor: CodeEditorInstance;
-  monaco: Monaco;
-};
 
 // Identifica os marcadores do parser, para que cada validação substitua a anterior.
 const MARKER_OWNER = 'parser';

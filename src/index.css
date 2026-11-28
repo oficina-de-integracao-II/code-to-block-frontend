@@ -67,3 +67,36 @@ body {
 .monaco-editor .monaco-hover .hover-row.status-bar {
   display: none;
 }
+
+/* Sugestões de funções, como no protótipo (frame "S03 Autocomplete aberto"):
+   nome em cima e descrição embaixo, a 8px do topo e 12px da esquerda. O `body`
+   dá prioridade sobre o CSS do Monaco, que é carregado depois deste arquivo. */
+body .monaco-editor .suggest-widget .monaco-list .monaco-list-row > .contents {
+  /* O Tailwind gera a classe `.contents` (display: contents), de mesmo nome. */
+  display: block;
+  box-sizing: border-box;
+  padding: 8px 12px 0;
+}
+
+body .monaco-editor .suggest-widget .monaco-list .monaco-list-row > .contents > .main {
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* O Monaco dá ao `.main` a altura da opção como line-height; cada linha usa a sua. */
+body .monaco-editor .suggest-widget .monaco-list .monaco-list-row > .contents > .main > .left {
+  line-height: 21px;
+}
+
+body .monaco-editor .suggest-widget .monaco-list .monaco-list-row > .contents > .main > .right {
+  max-width: none;
+  line-height: 18px;
+}
+
+body .monaco-editor .suggest-widget .monaco-list .monaco-list-row > .contents > .main > .right > .details-label {
+  margin-left: 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  /* A regra do Monaco para a opção ativa é mais específica que esta. */
+  color: var(--color-ink-muted) !important;
+}
