@@ -22,7 +22,7 @@ Os requisitos funcionais estão documentados em [REQUISITOS.md](./REQUISITOS.md)
 
 A arquitetura planejada para a aplicação é composta por:
 
-- **Editor de código:** recebe as chamadas de funções escritas pelo usuário.
+- **Editor de código:** recebe as chamadas de funções escritas pelo usuário e sublinha os erros apontados pelo parser, com a mensagem ao passar o mouse.
 - **Parser/interpretador:** identifica as funções conhecidas no código, no próprio frontend.
 - **Renderizador de blocos:** representa visualmente as chamadas reconhecidas.
 - **Painel de funções:** apresenta o catálogo de funções disponibilizado pelo backend.
