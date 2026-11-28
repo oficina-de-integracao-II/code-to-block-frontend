@@ -153,10 +153,9 @@ function readCommand(tokens: Token[], index: number): CommandRead {
 
   if (closeIndex > index + 2) {
     // Algo entre os parênteses, como em `Andar(Pare());`: um só erro, no
-    // primeiro token, e o comando inteiro (com o `;`) é descartado.
-    const hasSemicolon = after?.type === 'semicolon';
-    const next = closeIndex + (hasSemicolon ? 2 : 1);
-    return { ok: false, error: unexpected(tokens[index + 2]), next };
+    // primeiro token, e o resto do comando (até o `;`) é descartado, para que
+    // `Andar(2)x;` não gere um segundo erro no `x`.
+    return broken(unexpected(tokens[index + 2]), closeIndex + 1);
   }
 
   if (after?.type !== 'semicolon') {
