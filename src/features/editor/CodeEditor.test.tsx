@@ -44,6 +44,35 @@ const loadingCatalog: FunctionsContextValue = {
   reload: () => {},
 };
 
+/** Catálogo carregado só com `Pare`. */
+const loadedCatalog: FunctionsContextValue = {
+  ...loadingCatalog,
+  functions: [
+    {
+      id: 1,
+      nome: 'Pare',
+      descricao: 'Para o robô.',
+      codigoArduino: '',
+      blocoDefinicao: { type: 'pare', message0: 'Pare' },
+    },
+  ],
+  loading: false,
+};
+
+/** Editor com um catálogo controlado pelo teste, que pode mudar depois. */
+function renderWithCatalog(catalog: FunctionsContextValue) {
+  const editor = (value: FunctionsContextValue) => (
+    <FunctionsContext.Provider value={value}>
+      <EditorProvider>
+        <CodeEditor />
+      </EditorProvider>
+    </FunctionsContext.Provider>
+  );
+  const { rerender } = render(editor(catalog));
+
+  return { changeCatalog: (next: FunctionsContextValue) => rerender(editor(next)) };
+}
+
 function markers() {
   return within(screen.getByRole('list', { name: 'Marcadores de erro' })).queryAllByRole(
     'listitem',
@@ -157,20 +186,31 @@ describe('CodeEditor: marcadores de erro', () => {
     expect(markers()).toHaveLength(0);
   });
 
-  it('marca só a sintaxe enquanto o catálogo não está disponível', async () => {
+  it.each([
+    ['carrega', loadingCatalog],
+    ['falha ao carregar', { ...loadingCatalog, loading: false, error: 'Falha ao carregar' }],
+  ])('marca só a sintaxe enquanto o catálogo %s', async (_caso, catalog) => {
     const user = userEvent.setup();
-    render(
-      <FunctionsContext.Provider value={loadingCatalog}>
-        <EditorProvider>
-          <CodeEditor />
-        </EditorProvider>
-      </FunctionsContext.Provider>,
-    );
+    renderWithCatalog(catalog);
 
     await user.type(screen.getByLabelText('Editor de código'), 'Voar();Pare');
 
     expect(markers().map((item) => item.textContent)).toEqual([
       'Faltou o "()" depois de "Pare". (linha 1, coluna 8)',
+    ]);
+  });
+
+  it('marca a função desconhecida quando o catálogo chega, sem nova digitação', async () => {
+    const user = userEvent.setup();
+    const { changeCatalog } = renderWithCatalog(loadingCatalog);
+
+    await user.type(screen.getByLabelText('Editor de código'), 'Voar();');
+    expect(markers()).toHaveLength(0);
+
+    changeCatalog(loadedCatalog);
+
+    expect(markers().map((item) => item.textContent)).toEqual([
+      'Hmm, não conheço "Voar". (linha 1, coluna 1)',
     ]);
   });
 });
