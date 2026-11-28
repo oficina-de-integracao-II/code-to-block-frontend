@@ -34,3 +34,25 @@ export type FunctionCallNode = SourceRange & {
   type: 'FunctionCall';
   name: string;
 };
+
+export type DiagnosticCode =
+  | 'unknownFunction'
+  | 'missingParens'
+  | 'unclosedParen'
+  | 'missingSemicolon'
+  | 'unclosedComment'
+  | 'unexpectedToken';
+
+/** Erro encontrado no código. `start` é a posição citada na mensagem. */
+export type Diagnostic = SourceRange & {
+  code: DiagnosticCode;
+  message: string;
+  /** Nome do catálogo mais parecido, quando `code` é `unknownFunction`. */
+  suggestion?: string;
+};
+
+/** Chamadas válidas, na ordem do texto, e os erros encontrados. */
+export type ValidationResult = {
+  calls: FunctionCallNode[];
+  errors: Diagnostic[];
+};
