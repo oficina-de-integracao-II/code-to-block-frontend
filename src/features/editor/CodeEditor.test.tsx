@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { TOKEN_KEY } from '../../services/api';
 import { AuthContext } from '../auth/AuthContext';
+import { FunctionsContext, type FunctionsContextValue } from '../functions/FunctionsContext';
 import { FunctionsPanel } from '../functions/FunctionsPanel';
 import { FunctionsProvider } from '../functions/FunctionsProvider';
 import { CodeEditor } from './CodeEditor';
@@ -31,6 +32,21 @@ function Workspace() {
       <CodeEditor />
       <CodeState />
     </>
+  );
+}
+
+/** Catálogo que ainda está carregando: nenhum nome é conhecido. */
+const loadingCatalog: FunctionsContextValue = {
+  functions: [],
+  functionsByName: new Map(),
+  loading: true,
+  error: null,
+  reload: () => {},
+};
+
+function markers() {
+  return within(screen.getByRole('list', { name: 'Marcadores de erro' })).queryAllByRole(
+    'listitem',
   );
 }
 
@@ -85,9 +101,11 @@ describe('CodeEditor', () => {
     }
 
     render(
-      <EditorProvider>
-        <LateEditor />
-      </EditorProvider>,
+      <FunctionsContext.Provider value={loadingCatalog}>
+        <EditorProvider>
+          <LateEditor />
+        </EditorProvider>
+      </FunctionsContext.Provider>,
     );
 
     await user.click(screen.getByRole('button', { name: 'Andar' }));
@@ -109,5 +127,50 @@ describe('CodeEditor', () => {
 
     expect(screen.getByTestId('code-state')).toHaveTextContent('Andar();VireEsquerda();Pare();');
     expect(editor).toHaveValue('Andar();VireEsquerda();Pare();');
+  });
+});
+
+describe('CodeEditor: marcadores de erro', () => {
+  it('sublinha o comando inválido com a mensagem do parser', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    await user.type(screen.getByLabelText('Editor de código'), 'Andar();\nAndarr();');
+
+    const marker = await screen.findByText(
+      'Hmm, não conheço "Andarr". Você quis dizer "Andar"? (linha 2, coluna 1)',
+    );
+    expect(marker).toHaveAttribute('data-range', '2:1-2:10');
+    // O erro não impede a digitação: o texto continua chegando ao estado.
+    expect(screen.getByTestId('code-state')).toHaveTextContent('Andar(); Andarr();');
+  });
+
+  it('remove o marcador quando o código é corrigido', async () => {
+    const user = userEvent.setup();
+    renderWorkspace();
+
+    const editor = screen.getByLabelText('Editor de código');
+    await user.type(editor, 'Andar()');
+    expect(markers()).toHaveLength(1);
+
+    await user.type(editor, ';');
+    expect(markers()).toHaveLength(0);
+  });
+
+  it('marca só a sintaxe enquanto o catálogo não está disponível', async () => {
+    const user = userEvent.setup();
+    render(
+      <FunctionsContext.Provider value={loadingCatalog}>
+        <EditorProvider>
+          <CodeEditor />
+        </EditorProvider>
+      </FunctionsContext.Provider>,
+    );
+
+    await user.type(screen.getByLabelText('Editor de código'), 'Voar();Pare');
+
+    expect(markers().map((item) => item.textContent)).toEqual([
+      'Faltou o "()" depois de "Pare". (linha 1, coluna 8)',
+    ]);
   });
 });

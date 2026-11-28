@@ -42,3 +42,28 @@ body {
 * {
   box-sizing: border-box;
 }
+/* Marcadores de erro do editor, como no protótipo (frame "S03 Tooltip sugestão"):
+   sublinhado reto em vez do ondulado do Monaco e tooltip com a fonte do app.
+   O `.view-overlays` vence a regra que o Monaco injeta para o ondulado. */
+.monaco-editor .view-overlays .squiggly-warning {
+  background: none;
+  border-bottom: 2px solid var(--color-sun);
+}
+
+.monaco-editor {
+  /* Raio dos widgets do Monaco (tooltip e sugestões); ele não define um padrão. */
+  --vscode-cornerRadius-large: 8px;
+}
+
+/* O Monaco aplica a fonte do editor inline na mensagem: só `!important` a troca. */
+.monaco-editor .monaco-hover .marker.hover-contents {
+  padding: 10px 12px;
+  font-family: var(--font-body) !important;
+  font-size: 14px !important;
+  line-height: 19px !important;
+}
+
+/* Esconde as ações "Ver problema" e "Correção rápida", que não se aplicam aqui. */
+.monaco-editor .monaco-hover .hover-row.status-bar {
+  display: none;
+}
